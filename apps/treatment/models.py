@@ -27,7 +27,7 @@ class Prescription(models.Model):
 class Conclusion(models.Model):
     patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE)
     conclusion_text = models.TextField()
-    date12 = models.DateField(auto_now_add=True)
+    date = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return f"Conclusion for {self.patient.user.first_name} on {self.date}"

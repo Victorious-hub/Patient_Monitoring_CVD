@@ -1,0 +1,12 @@
+[flake8]
+exclude = 
+    */migrations/*
+    .git,
+    .gitignore,
+    *.pot,
+    *.py[co],
+    __pycache__,
+    .env
+    __init__.py: F401
+max-complexity = 10
+max-line-length = 127

@@ -62,5 +62,105 @@ It's a backend part of my application. It includes:
 - PostgreSQL
 - Celery/Celery-Flow
 - Redis
+- nginx
 
+## Models
 
+### User models
+![DataModels](screenshots/users_models.png)
+### CustomUser Model
+- id: integer [primary key]
+- email: text
+- first_name: text
+- last_name: text 
+- date_joined: timestamp
+- date_updated:timestamp
+- is_active: bool
+- is_staff: bool
+### PatientProfile Model
+- id: integer [primary key]
+- user: CustomUser
+- weight: float
+- height: integer
+- age:  integer
+- birthday: timestamp
+- role: text
+- mobile: text
+- slug: text
+### DoctorProfile Model
+- id: integer [primary key]
+- user: CustomUser
+- patients: PatientProfile
+- patient_cards: PatientCard
+- role: text
+- slug: text
+### PatientCard Model
+- id integer: [primary key]
+- patient: PatientProfile
+- allergies: json
+- abnormal_conditions: text
+- smoke: bool
+- alcohol: bool
+- active: bool
+
+### Analysis models
+ ![DataModels](screenshots/analysis_models.png)
+### BaseModel
+- id integer: [primary key]
+- patient: PatientCard
+- date_created: timestamp
+### BloodAnalysis(BaseModel) Model
+- id integer [primary key]
+- glucose integer
+- ap_hi integer
+- ap_lo integer
+### CholesterolAnalysis Model
+- id integer: [primary key]
+- cholesterol integer
+- hdl_cholesterol float
+- ldl_cholesterol float
+- triglycerides float
+### DiseaseAnalysis Model
+- id integer: [primary key]
+- blood_analysis BloodAnalysis [ref: > - BloodAnalysis.id]
+- cholesterol_analysis CholesterolAnalysis [ref: > CholesterolAnalysis.id]
+- anomaly bool
+- date_created timestamp
+
+### Notification models
+ ![DataModels](screenshots/notification_models.png)
+
+### Notification Model
+- id integer: [primary key]
+- patient: PatientCard [ref: > PatientCard.id]
+- message: text
+- is_read: bool
+- date_sent: timestamp
+
+### Treatment models
+ ![DataModels](screenshots/treatment_models.png)
+
+### Appointment Model
+- id: integer [primary key]
+- patient_card: PatientCard [ref: > PatientCard.id]
+- appointment_date: timestamp
+- appointment_time: timestamp
+- created_at: timestamp
+### Medication Model
+- id: integer [primary key]
+- name: text
+- dosage: float
+- description: text
+- created_at: timestamp
+### Prescription Model
+- id: integer [primary key]
+- patient_card: PatientCard [ref: > PatientCard.id]
+- medication: Medication [ref: > Medication.id]
+- dosage: float
+- start_date: timestamp
+- end_data: timestamp
+### Conclusion Model
+- id integer [primary key]
+- patient_card PatientCard [ref: > PatientCard.id]
+- desc text
+- created_at timestamp

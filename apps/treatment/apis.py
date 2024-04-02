@@ -3,9 +3,10 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import serializers
 
-from apps.treatment.models import Medication, Prescription
-from apps.treatment.services import MedicationService, PrescriptionService
+from apps.treatment.models import Appointment, Conclusion, Medication, Prescription
+from apps.treatment.services import AppointmentService, MedicationService, PrescriptionService
 from apps.users.models import PatientCard
+from apps.users.tasks import send_appointment
 
 
 class MedicationCreateApi(views.APIView):
@@ -44,4 +45,43 @@ class PrescriptionCreateApi(views.APIView):
         serializer.is_valid(raise_exception=True)
         prescription = PrescriptionService(**serializer.validated_data)
         prescription.create(slug)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class AppointmentCreateApi(views.APIView):
+
+    class InputSerializer(serializers.Serializer):
+        patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all())
+        appointment_date = serializers.DateField()
+        appointment_time = serializers.TimeField()
+
+        class Meta:
+            model = Appointment
+            fields = '__all__'
+
+    def post(self, request, slug):
+        serializer = self.InputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        appointment = AppointmentService(**serializer.validated_data)
+        appointment.create_appointment(slug)
+        send_appointment.delay(slug)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ConclusionCreateApi(views.APIView):
+    class InputSerializer(serializers.Serializer):
+        patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all())
+        text = serializers.CharField()
+
+        class Meta:
+            model = Conclusion
+            fields = '__all__'
+
+    def post(self, request, slug):
+
+        serializer = self.InputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        prescription = AppointmentService(**serializer.validated_data)
+        prescription.create_conclusion(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

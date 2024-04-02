@@ -14,6 +14,7 @@ from apps.users.selectors import (
     DoctorSelector,
     PatientSelector
 )
+from apps.users.tasks import doctor_patient_add
 from apps.users.utils import inline_serializer
 
 from .models import (
@@ -276,6 +277,7 @@ class DoctorPatientAddApi(views.APIView):
         serializer.is_valid(raise_exception=True)
         doctor = DoctorService(**serializer.validated_data)
         doctor.patient_list_update(slug=slug)
+        print(doctor_patient_add.delay(slug))
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

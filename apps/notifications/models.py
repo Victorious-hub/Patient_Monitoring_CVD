@@ -1,12 +1,11 @@
 from django.utils import timezone
 from django.db import models
 
-from apps.users.models import DoctorProfile, PatientProfile
+from apps.users.models import PatientProfile
 
 
 class Notification(models.Model):
-    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='patients_notification')
-    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='doctors_notification')
+    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE)
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     date_sent = models.DateField(default=timezone.now)

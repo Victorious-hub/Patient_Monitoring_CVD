@@ -1,17 +1,16 @@
 from django.db import models
 from django.utils import timezone
-from apps.users.models import DoctorProfile, PatientCard, PatientProfile
+from apps.users.models import PatientCard
 
 
 class Appointment(models.Model):
-    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE)
-    healthcare_provider = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE)
-    appointment_date = models.DateField()
-    appointment_time = models.TimeField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    patient_card = models.ForeignKey(PatientCard, on_delete=models.CASCADE)
+    appointment_date = models.DateField(blank=True, null=True)
+    appointment_time = models.TimeField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Appointment for {self.patient} with {self.healthcare_provider}"
+        return f"Appointment for {self.patient_card}"
 
 
 class Medication(models.Model):
@@ -44,13 +43,13 @@ class Prescription(models.Model):
 
 
 class Conclusion(models.Model):
-    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE)
+    patient_card = models.ForeignKey(PatientCard, on_delete=models.CASCADE)
     text = models.TextField()
-    date = models.DateField(default=timezone.now)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        verbose_name = "conclusion"
-        verbose_name_plural = "conclusions"
+        verbose_name = "prescription"
+        verbose_name_plural = "prescriptions"
 
     def __str__(self):
-        return f"Conclusion for {self.patient.user.first_name} on {self.date}"
+        return f"Prescription for {self.patient_card}"

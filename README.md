@@ -62,5 +62,5 @@ It's a backend part of my application. It includes:
 - PostgreSQL
 - Celery/Celery-Flow
 - Redis
-- nginx
+
 

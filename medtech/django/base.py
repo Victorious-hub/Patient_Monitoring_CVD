@@ -28,6 +28,7 @@ LOCAL_APPS = [
     'apps.analysis.apps.AnalysisConfig',
     'apps.notifications.apps.NotificationsConfig',
     'apps.treatment.apps.TreatmentConfig',
+    'apps.api.apps.ApiConfig',
 ]
 
 THIRD_PARTY_APPS = [

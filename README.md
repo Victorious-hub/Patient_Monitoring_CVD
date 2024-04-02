@@ -1,4 +1,4 @@
-## Setup
+# Setup
 First, clone the repository:
 
 ```sh
@@ -44,4 +44,23 @@ In -medtech- current directory, build and run you docker-compose images:
 ```sh
 $ docker-compose up --build 
 ```
+
+# Project overview
+
+Patient Cardio Vascular Disease monitoring is just a simple application, that main goal is an easy track doctor patients with their potential cvd problems or anomalies, provide some treatment, make their life better and just to be on air). For searching cdv anomalues, this app includes some machine learning models, that were trained on CVD dataset
+- Cardiovascular Disease dataset https://www.kaggle.com/datasets/sulianovacardiovascular-disease-dataset
+
+It's also a good choice for patient to track it's analyses, doctor info, notification, condition and treat proccess
+
+## Project stack
+It's a backend part of my application. It includes:
+- Python
+- Jupyter notebook analysis
+- REST architecture
+- Django Rest Framework
+- Docker/docker-compose
+- PostgreSQL
+- Celery/Celery-Flow
+- Redis
+- nginx
 

@@ -47,6 +47,7 @@ class PatientService:
             last_name=self.user['last_name'],
             password=make_password(self.user['password']),
             email=self.user['email'],
+            role='P'
         )
 
         obj = PatientProfile.objects.create(user=new_user)
@@ -114,6 +115,7 @@ class DoctorService:
             password=make_password(self.user['password']),
             first_name=self.user['first_name'],
             last_name=self.user['last_name'],
+            role='D'
         )
 
         obj = DoctorProfile.objects.create(user=new_user)

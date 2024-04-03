@@ -19,6 +19,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_updated = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    role = models.CharField(max_length=255, choices=ROLES, blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -38,7 +39,7 @@ class PatientProfile(models.Model):
     gender = models.CharField(blank=True, null=True, max_length=255, choices=GENDER, default="None")
     age = models.IntegerField(blank=True, null=True)
     birthday = models.DateField(blank=True, null=True)
-    role = models.CharField(max_length=255, choices=ROLES, default='P', blank=True, null=True)
+
     mobile = models.CharField(max_length=11, unique=True, blank=True, null=True)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, editable=False)
 
@@ -75,7 +76,6 @@ class PatientCard(models.Model):
 class DoctorProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='doctor')
     patients = models.ManyToManyField(PatientProfile, related_name='patients')
-    role = models.CharField(max_length=255, choices=ROLES, default='D', null=True)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, editable=False)
     patient_cards = models.ManyToManyField(PatientCard, related_name='patient_cards')
 

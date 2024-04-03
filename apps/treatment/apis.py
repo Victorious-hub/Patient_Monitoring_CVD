@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import serializers
 
+from apps.analysis.permissions import IsDoctor
 from apps.treatment.models import Appointment, Conclusion, Medication, Prescription
 from apps.treatment.services import AppointmentService, MedicationService, PrescriptionService
 from apps.users.models import PatientCard
@@ -49,6 +50,7 @@ class PrescriptionCreateApi(views.APIView):
 
 
 class AppointmentCreateApi(views.APIView):
+    permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.Serializer):
         patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all())
@@ -65,11 +67,12 @@ class AppointmentCreateApi(views.APIView):
         appointment = AppointmentService(**serializer.validated_data)
         appointment.create_appointment(slug)
         send_appointment.delay(slug)
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ConclusionCreateApi(views.APIView):
+    permission_classes = (IsDoctor,)
+
     class InputSerializer(serializers.Serializer):
         patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all())
         text = serializers.CharField()

@@ -15,8 +15,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    date_joined = models.DateTimeField(default=timezone.now)
-    date_updated = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     role = models.CharField(max_length=255, choices=ROLES, blank=True, null=True)
@@ -26,7 +26,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     def __str__(self):
-        return self.email
+        return f"Custom User: {self.first_name} - {self.last_name}"
 
 
 class PatientProfile(models.Model):
@@ -48,7 +48,7 @@ class PatientProfile(models.Model):
         verbose_name_plural = "patients"
 
     def __str__(self):
-        return f"Patient: {self.user.first_name}"
+        return f"Patient: {self.user.first_name} - {self.user.last_name}"
 
     def save(self, *args, **kwargs):
         slug_data = self.user.email.split('@')[0]
@@ -66,7 +66,7 @@ class PatientCard(models.Model):
     active = models.BooleanField()
 
     def __str__(self):
-        return self.patient.user.first_name
+        return f"Patient Card: {self.patient.user.first_name} - {self.patient.user.last_name}"
 
     class Meta:
         verbose_name = "card"
@@ -84,7 +84,7 @@ class DoctorProfile(models.Model):
         verbose_name_plural = "doctors"
 
     def __str__(self):
-        return self.user.first_name
+        return f"Doctor: {self.user.first_name} - {self.user.last_name}"
 
     def save(self, *args, **kwargs):
         slug_data = self.user.email.split('@')[0]

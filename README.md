@@ -1,7 +1,22 @@
 <p align='center'>
 <img src="https://img.shields.io/badge/Django-239120?logo=django&logoColor=white" />
 <img src="https://img.shields.io/badge/Python-239120?logo=python&logoColor=white" />
-<img src="https://img.shields.io/badge/SQL%20Server-CC2927?logo=microsoft-sql-server&logoColor=white" />
+
+<img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
+
+<img src="https://img.shields.io/badge/redis-%23DD0031.svg?&style=for-the-badge&logo=redis&logoColor=white" />
+
+<img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white" />
+
+
+<img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" />
+
+<img src="https://img.shields.io/badge/django%20rest-ff1709?style=for-the-badge&logo=django&logoColor=white" />
+
+<img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" />
+
+<img src="https://img.shields.io/badge/scikit_learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white" />
+
 <img src="https://img.shields.io/badge/html5-E34F26?logo=html5&logoColor=white" />
 <img src="https://img.shields.io/badge/css3-1572B6?logo=css3&logoColor=white" />
 <img src="https://img.shields.io/badge/bootstrap-563D7C?logo=bootstrap&logoColor=white" />

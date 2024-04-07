@@ -15,17 +15,18 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    date_joined = models.DateTimeField(default=timezone.now)
-    date_updated = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    role = models.CharField(max_length=255, choices=ROLES, blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     objects = CustomUserManager()
 
     def __str__(self):
-        return self.email
+        return f"Custom User: {self.first_name} - {self.last_name}"
 
 
 class PatientProfile(models.Model):
@@ -38,7 +39,7 @@ class PatientProfile(models.Model):
     gender = models.CharField(blank=True, null=True, max_length=255, choices=GENDER, default="None")
     age = models.IntegerField(blank=True, null=True)
     birthday = models.DateField(blank=True, null=True)
-    role = models.CharField(max_length=255, choices=ROLES, default='P', blank=True, null=True)
+
     mobile = models.CharField(max_length=11, unique=True, blank=True, null=True)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, editable=False)
 
@@ -47,7 +48,7 @@ class PatientProfile(models.Model):
         verbose_name_plural = "patients"
 
     def __str__(self):
-        return f"Patient: {self.user.first_name}"
+        return f"Patient: {self.user.first_name} - {self.user.last_name}"
 
     def save(self, *args, **kwargs):
         slug_data = self.user.email.split('@')[0]
@@ -65,7 +66,7 @@ class PatientCard(models.Model):
     active = models.BooleanField()
 
     def __str__(self):
-        return self.patient.user.first_name
+        return f"Patient Card: {self.patient.user.first_name} - {self.patient.user.last_name}"
 
     class Meta:
         verbose_name = "card"
@@ -75,7 +76,6 @@ class PatientCard(models.Model):
 class DoctorProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='doctor')
     patients = models.ManyToManyField(PatientProfile, related_name='patients')
-    role = models.CharField(max_length=255, choices=ROLES, default='D', null=True)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, editable=False)
     patient_cards = models.ManyToManyField(PatientCard, related_name='patient_cards')
 
@@ -84,7 +84,7 @@ class DoctorProfile(models.Model):
         verbose_name_plural = "doctors"
 
     def __str__(self):
-        return self.user.first_name
+        return f"Doctor: {self.user.first_name} - {self.user.last_name}"
 
     def save(self, *args, **kwargs):
         slug_data = self.user.email.split('@')[0]

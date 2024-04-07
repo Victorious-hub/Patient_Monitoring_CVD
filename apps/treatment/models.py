@@ -24,7 +24,7 @@ class Medication(models.Model):
         verbose_name_plural = "medications"
 
     def __str__(self):
-        return self.name
+        return f"Medication: {self.name}"
 
 
 class Prescription(models.Model):
@@ -48,8 +48,8 @@ class Conclusion(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        verbose_name = "prescription"
-        verbose_name_plural = "prescriptions"
+        verbose_name = "conclusion"
+        verbose_name_plural = "conslusions"
 
     def __str__(self):
-        return f"Prescription for {self.patient_card}"
+        return f"Conclusion: {self.patient_card}"

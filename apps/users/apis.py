@@ -4,6 +4,7 @@ from rest_framework import views
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import serializers
+from apps.analysis.permissions import IsDoctor, IsPatient
 from apps.users.constansts import GENDER
 from apps.users.services import (
     DoctorService,
@@ -54,7 +55,7 @@ class PatientCreateApi(views.APIView):
 
 
 class PatientUpdateDataApi(views.APIView):
-    # permission_classes = (IsPatient,)
+    permission_classes = (IsPatient,)
 
     class InputSerializer(serializers.ModelSerializer):
         weight = serializers.FloatField(),
@@ -77,7 +78,7 @@ class PatientUpdateDataApi(views.APIView):
 
 
 class PatientUpdateContactApi(views.APIView):
-    # permission_classes = (IsPatient,)
+    permission_classes = (IsPatient,)
 
     class InputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -123,7 +124,7 @@ class PatientUpdatePasswordApi(views.APIView):
 
 
 class PatientListApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
         weight = serializers.FloatField(),
@@ -149,7 +150,7 @@ class PatientListApi(views.APIView):
 
 
 class PatientDetailApi(views.APIView):
-    # permission_classes = (IsPatient,)
+    permission_classes = (IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         weight = serializers.FloatField(),
@@ -182,6 +183,7 @@ class DoctorCreateApi(views.APIView):
             'last_name': serializers.CharField(),
             'email': serializers.EmailField(),
             'password': serializers.CharField(),
+            'role': serializers.CharField()
         })
 
         class Meta:
@@ -197,7 +199,7 @@ class DoctorCreateApi(views.APIView):
 
 
 class DoctorListApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
@@ -219,7 +221,7 @@ class DoctorListApi(views.APIView):
 
 
 class DoctorDetailApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
@@ -241,7 +243,7 @@ class DoctorDetailApi(views.APIView):
 
 
 class DoctorUpdateApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -263,7 +265,7 @@ class DoctorUpdateApi(views.APIView):
 
 
 class DoctorPatientAddApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
@@ -277,11 +279,13 @@ class DoctorPatientAddApi(views.APIView):
         serializer.is_valid(raise_exception=True)
         doctor = DoctorService(**serializer.validated_data)
         doctor.patient_list_update(slug=slug)
-        print(doctor_patient_add.delay(slug))
+        doctor_patient_add.delay(slug)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class DoctorPatientDeleteApi(views.APIView):
+    permission_classes = (IsDoctor,)
+
     class InputSerializer(serializers.ModelSerializer):
         patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=False)
 

@@ -1,33 +1,37 @@
 from django.contrib import admin
 from .models import PatientProfile, DoctorProfile, PatientCard, CustomUser
+from unfold.admin import ModelAdmin
 
 
-# class CustomAccountAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'email', 'first_name', 'slug', 'last_name', 'mobile', 'gender',
-#                     'role', 'is_active', 'is_staff', 'date_joined', 'date_updated')
-#     search_fields = ('first_name', 'last_name')
-#     list_editable = ('is_active', 'is_staff', 'first_name', 'last_name')
+@admin.register(CustomUser)
+class CustomAccountAdmin(ModelAdmin):
+    list_display = ('id', 'email', 'first_name', 'last_name',
+                    'role', 'is_active', 'is_staff', 'created_at', 'updated_at',
+                    )
+    search_fields = ('first_name', 'email',)
+    list_editable = ('is_active', 'is_staff', 'first_name', 'last_name',)
 
-#     list_filter = ('first_name', 'slug',)
-#     empty_value_display = "undefined"
-
-
-# class PatientAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'user', 'address', 'slug',)
-#     list_display_links = ('user',)
-#     list_editable = ('address',)
-
-#     list_filter = ('user', 'address', 'slug',)
+    list_filter = ('email',)
+    empty_value_display = "undefined"
 
 
-# class DoctorAdmin(admin.ModelAdmin):
-#     list_display = ('id', 'user', 'spec', 'slug',)
-#     list_display_links = ('user',)
+class PatientAdmin(ModelAdmin):
+    list_display = ('id', 'user', 'weight', 'height',
+                    'gender', 'age', 'birthday', 'mobile', 'slug',
+                    )
+    list_display_links = ('user',)
+    list_editable = ('user',)
 
-#     list_filter = ('user', 'patients', 'slug',)
+    list_filter = ('user', 'slug',)
 
 
-admin.site.register(CustomUser)
+class DoctorAdmin(ModelAdmin):
+    list_display = ('id', 'user', 'patients', 'slug', 'patient_cards',)
+    list_display_links = ('user',)
+
+    list_filter = ('user', 'patients', 'slug',)
+
+
+admin.site.register(PatientCard)
 admin.site.register(PatientProfile)
 admin.site.register(DoctorProfile)
-admin.site.register(PatientCard)

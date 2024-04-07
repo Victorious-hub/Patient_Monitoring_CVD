@@ -1,6 +1,9 @@
 <p align='center'>
-<img src="https://img.shields.io/badge/Django-239120?logo=django&logoColor=white" />
-<img src="https://img.shields.io/badge/Python-239120?logo=python&logoColor=white" />
+<img src="https://img.shields.io/badge/Python-FFD43B?style=for-the-badge&logo=python&logoColor=blue" />
+
+<img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green" />
+
+<img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white" />
 
 <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
 
@@ -17,11 +20,6 @@
 
 <img src="https://img.shields.io/badge/scikit_learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white" />
 
-<img src="https://img.shields.io/badge/html5-E34F26?logo=html5&logoColor=white" />
-<img src="https://img.shields.io/badge/css3-1572B6?logo=css3&logoColor=white" />
-<img src="https://img.shields.io/badge/bootstrap-563D7C?logo=bootstrap&logoColor=white" />
-<img src="https://img.shields.io/badge/Github-181717?logo=github&logoColor=white" />
-<img src="https://img.shields.io/badge/PayPal-000144?logo=paypal&logoColor=white" />
 </p>
 
 # Setup

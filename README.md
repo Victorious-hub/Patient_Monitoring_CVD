@@ -71,7 +71,7 @@ $ docker-compose up --build
 
 # Project overview
 
-Patient Cardio Vascular Disease monitoring is just a simple application. The main goal is to easy track doctor's patients with their potential CV problems or anomalies, provide some treatment, make their life better and just be on air). For searching for CV anomalies, this app includes some machine learning models that were trained on the CVD dataset.
+Patient Cardio Vascular Disease monitoring is just a simple application. The main goal is to easy track doctor's patients with their potential CV problems or anomalies, provide some treatment, make their life better and just be on air). For searching for CV anomalies, this app includes some machine learning models that were trained on the CVD dataset!
 - Cardiovascular Disease dataset https://www.kaggle.com/datasets/sulianovacardiovascular-disease-dataset
 
 It's also a good choice for patient to track it's analyses, doctor info, notification, condition and treat proccess

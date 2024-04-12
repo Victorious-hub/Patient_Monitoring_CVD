@@ -2,6 +2,7 @@ import logging
 from django.views.generic import TemplateView
 from rest_framework import views
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import serializers
 from apps.analysis.permissions import IsDoctor, IsPatient
@@ -100,31 +101,30 @@ class PatientUpdateContactApi(views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class PatientUpdatePasswordApi(views.APIView):
-    pass
-    # #permission_classes = (IsPatient,)
+# class PatientUpdatePasswordApi(views.APIView):
+#     #permission_classes = (IsPatient,)
 
-    # class InputSerializer(serializers.Serializer):
-    #     password_confirm = serializers.CharField(),
-    #     new_password = serializers.CharField(),
-    #     user = inline_serializer(fields={
-    #         'password': serializers.CharField(),
-    #     })
+#     class InputSerializer(serializers.Serializer):
+#         password_confirm = serializers.CharField(),
+#         new_password = serializers.CharField(),
+#         user = inline_serializer(fields={
+#             'password': serializers.CharField(),
+#         })
 
-    #     class Meta:
-    #         model = PatientProfile
-    #         fields = ('user', 'new_password', 'password_confirm',)
+#         class Meta:
+#             model = PatientProfile
+#             fields = ('user', 'new_password', 'password_confirm',)
 
-    # def put(self, request, slug):
-    #     serializer = self.InputSerializer(data=request.data, partial=True)
-    #     serializer.is_valid(raise_exception=True)
-    #     patient = PatientService(**serializer.validated_data)
-    #     patient.password_update(slug)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
+#     def put(self, request, slug):
+#         serializer = self.InputSerializer(data=request.data, partial=True)
+#         serializer.is_valid(raise_exception=True)
+#         patient = PatientService(**serializer.validated_data)
+#         patient.password_update(slug)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PatientListApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    permission_classes = (IsAuthenticated,)
 
     class OutputSerializer(serializers.ModelSerializer):
         weight = serializers.FloatField(),
@@ -137,11 +137,12 @@ class PatientListApi(views.APIView):
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
             'email': serializers.EmailField(),
+            'role': serializers.CharField(),
         })
 
         class Meta:
             model = PatientProfile
-            fields = ('user', 'weight', 'height', 'gender', 'age', 'birthday', 'slug', )
+            fields = ('user', 'weight', 'height', 'gender', 'age', 'birthday', 'slug',)
 
     def get(self, request):
         patients = PatientSelector()

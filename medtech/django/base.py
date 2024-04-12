@@ -24,12 +24,6 @@ CELERY_BROKER_URL = 'redis://redis:6379'
 CELERY_RESULT_BACKEND = 'redis://redis:6379'
 
 LOCAL_APPS = [
-    "unfold",  # before django.contrib.admin
-    "unfold.contrib.filters",  # optional, if special filters are needed
-    "unfold.contrib.forms",  # optional, if special form elements are needed
-    "unfold.contrib.import_export",  # optional, if django-import-export package is used
-    "unfold.contrib.guardian",  # optional, if django-guardian package is used
-    "unfold.contrib.simple_history",
     'apps.users.apps.UsersConfig',
     'apps.authentication.apps.AuthenticationConfig',
     'apps.analysis.apps.AnalysisConfig',

@@ -3,6 +3,8 @@ import pickle
 import os
 import numpy as np
 
+from apps.notifications.models import Notification
+
 
 @shared_task()
 def predict_anomaly(features: list):
@@ -13,3 +15,8 @@ def predict_anomaly(features: list):
     new_data = np.array(list(features)).reshape(1, -1)
     predicted_anomaly = model.predict(new_data)[0]
     return predicted_anomaly
+
+
+@shared_task()
+def send_analysis_result(slug: str) -> Notification:
+    pass

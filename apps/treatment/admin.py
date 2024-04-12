@@ -1,10 +1,9 @@
 from django.contrib import admin
 from .models import Appointment, Medication, Prescription
-from unfold.admin import ModelAdmin
 
 
 @admin.register(Appointment)
-class AppointmentAdmin(ModelAdmin):
+class AppointmentAdmin(admin.ModelAdmin):
     list_display = ('id', 'patient_card', 'appointment_date', 'appointment_time',
                     'created_at',
                     )
@@ -15,7 +14,7 @@ class AppointmentAdmin(ModelAdmin):
 
 
 @admin.register(Medication)
-class MedicationAdmin(ModelAdmin):
+class MedicationAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'dosage', 'description',
                     'created_at',
                     )
@@ -26,7 +25,7 @@ class MedicationAdmin(ModelAdmin):
 
 
 @admin.register(Prescription)
-class PrescriptionAdmin(ModelAdmin):
+class PrescriptionAdmin(admin.ModelAdmin):
     list_display = ('id', 'patient_card', 'medication',
                     'dosage', 'start_date', 'end_date',
                     )

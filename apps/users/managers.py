@@ -29,6 +29,3 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class PatientProfileManager(models.Manager):
-    def get_queryset(self) -> models.QuerySet:
-        return super().get_queryset().all()

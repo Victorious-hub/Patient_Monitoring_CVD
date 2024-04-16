@@ -202,8 +202,8 @@ class DoctorListApi(views.APIView):
     # permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.patient_namager.all(), many=True)
-        patient_cards = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.card_manager.all(), many=True)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
+        patient_cards = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
@@ -224,8 +224,8 @@ class DoctorDetailApi(views.APIView):
     permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.patient_namager.all(), many=True)
-        patient_cards = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.card_manager.all(), many=True)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
+        patient_cards = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
@@ -268,7 +268,7 @@ class DoctorPatientAddApi(views.APIView):
     permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.patient_namager.all(), many=True)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
 
         class Meta:
             model = DoctorProfile
@@ -287,7 +287,7 @@ class DoctorPatientDeleteApi(views.APIView):
     permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.patient_namager.all(), many=True)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
 
         class Meta:
             model = DoctorProfile

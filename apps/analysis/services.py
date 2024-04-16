@@ -6,6 +6,54 @@ from apps.users.exceptions import DoctorNotFound, PatientCardExists, PatientNotF
 from apps.users.models import DoctorProfile, PatientProfile
 
 
+class CardService:
+    def __init__(self,
+                 patient: PatientProfile = None,
+                 blood_type: str = None,
+                 allergies: dict = None,
+                 abnormal_conditions: str = None,
+                 smoke: bool = None,
+                 alcohol: bool = None,
+                 active: bool = None
+                 ):
+        self.patient = patient
+        self.blood_type = blood_type
+        self.allergies = allergies
+        self.abnormal_conditions = abnormal_conditions
+        self.smoke = smoke
+        self.alcohol = alcohol
+        self.active = active
+
+    @transaction.atomic
+    def card_create(self,
+                    slug: str,
+                    ) -> PatientCard:
+
+        if not DoctorProfile.objects.filter(slug=slug).exists():
+            raise DoctorNotFound
+
+        if PatientCard.objects.filter(patient=self.patient).exists():
+            raise PatientCardExists
+
+        doctor = get_object_or_404(DoctorProfile, slug=slug)
+        print(self.patient)
+        patient_card = PatientCard.objects.create(
+            abnormal_conditions=self.abnormal_conditions,
+            patient=self.patient,
+            allergies=self.allergies,
+            smoke=self.smoke,
+            alcohol=self.alcohol,
+            blood_type=self.blood_type,
+            active=self.active
+        )
+
+        patient_card.full_clean()
+        patient_card.save()
+        doctor.patient_cards.add(patient_card)
+
+        return patient_card
+
+
 class AnalysisService:
     def __init__(self,
                  blood_analysis: BloodAnalysis = None,
@@ -25,6 +73,7 @@ class AnalysisService:
                  hdl_cholesterol: float = None,
                  ldl_cholesterol: float = None,
                  triglycerides: float = None,
+                 patient: int = None,
                  ):
         self.cholesterol_analysis = cholesterol_analysis,
         self.blood_analysis = blood_analysis,
@@ -43,6 +92,7 @@ class AnalysisService:
         self.hdl_cholesterol = hdl_cholesterol
         self.ldl_cholesterol = ldl_cholesterol
         self.triglycerides = triglycerides
+        self.patient = patient,
 
     @transaction.atomic
     def create_blood_analysis(self,
@@ -129,9 +179,9 @@ class AnalysisService:
             raise DoctorNotFound
 
         patient_card = PatientCard.objects.get(patient=self.patient_card.patient)
-        blood_obj = BloodAnalysis.objects.filter(patient=patient_card).order_by('id').last()
+        blood_obj = BloodAnalysis.objects.filter(patient=patient_card).last()
         cholesterol_obj = CholesterolAnalysis.objects.filter(patient=patient_card).order_by('id').last()
-
+        print(patient_card)
         patient_card.patient.gender = 1
         preditction = predict_anomaly([
             blood_obj.ap_hi,

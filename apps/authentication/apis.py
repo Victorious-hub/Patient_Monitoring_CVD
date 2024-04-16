@@ -1,6 +1,7 @@
 from rest_framework import views, status
 from rest_framework.response import Response
-from apps.users.permissions import IsDoctor, IsPatient
+from permissions.doctor_permission import IsDoctor
+from permissions.patient_permission import IsPatient
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView

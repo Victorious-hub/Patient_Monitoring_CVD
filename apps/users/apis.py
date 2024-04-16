@@ -2,10 +2,11 @@ import logging
 from django.views.generic import TemplateView
 from rest_framework import views
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+
 from rest_framework.response import Response
 from rest_framework import serializers
-from apps.analysis.permissions import IsDoctor, IsPatient
+from permissions.doctor_permission import IsDoctor
+from permissions.patient_permission import IsPatient
 from apps.users.constansts import GENDER
 from apps.users.services import (
     DoctorService,
@@ -20,7 +21,6 @@ from apps.users.tasks import doctor_patient_add
 from apps.users.utils import inline_serializer
 
 from .models import (
-    PatientCard,
     PatientProfile,
     DoctorProfile
 )
@@ -46,7 +46,7 @@ class PatientCreateApi(views.APIView):
             fields = ('user',)
 
     def post(self, request):
-        print(request.data)
+
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -56,7 +56,7 @@ class PatientCreateApi(views.APIView):
 
 
 class PatientUpdateDataApi(views.APIView):
-    permission_classes = (IsPatient,)
+    # permission_classes = (IsPatient,)
 
     class InputSerializer(serializers.ModelSerializer):
         weight = serializers.FloatField(),
@@ -124,7 +124,7 @@ class PatientUpdateContactApi(views.APIView):
 
 
 class PatientListApi(views.APIView):
-    permission_classes = (IsAuthenticated,)
+    # permission_classes = (IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         weight = serializers.FloatField(),
@@ -184,7 +184,6 @@ class DoctorCreateApi(views.APIView):
             'last_name': serializers.CharField(),
             'email': serializers.EmailField(),
             'password': serializers.CharField(),
-            'role': serializers.CharField()
         })
 
         class Meta:
@@ -200,11 +199,11 @@ class DoctorCreateApi(views.APIView):
 
 
 class DoctorListApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
-        patient_cards = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all(), many=True)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientSelector.list, many=True)
+        patient_cards = serializers.PrimaryKeyRelatedField(queryset=DoctorSelector.card_list, many=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
@@ -225,8 +224,8 @@ class DoctorDetailApi(views.APIView):
     permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
-        patient_cards = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all(), many=True)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientSelector.list, many=True)
+        patient_cards = serializers.PrimaryKeyRelatedField(queryset=DoctorSelector.card_list, many=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
@@ -269,7 +268,7 @@ class DoctorPatientAddApi(views.APIView):
     permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientSelector.list, many=True)
 
         class Meta:
             model = DoctorProfile
@@ -288,7 +287,7 @@ class DoctorPatientDeleteApi(views.APIView):
     permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=False)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientSelector.list, many=True)
 
         class Meta:
             model = DoctorProfile

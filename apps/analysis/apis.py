@@ -1,19 +1,19 @@
 from rest_framework import views
 from rest_framework import serializers
 from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, DiseaseAnalysis, PatientCard
-from apps.analysis.permissions import IsDoctor, IsPatient
 from apps.analysis.selectors import AnalysisSelector
-from apps.analysis.services import AnalysisService
-from apps.users.constansts import ALLERGIES, BLOOD_TYPE
+from apps.analysis.services import AnalysisService, CardService
+from apps.users.constansts import BLOOD_TYPE
 from rest_framework.response import Response
 from rest_framework import status
 
+from apps.users.models import PatientProfile
 from apps.users.selectors import DoctorSelector, PatientSelector
 from apps.users.utils import inline_serializer
 
 
 class PatientBloodCreateApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all(), many=False)
@@ -34,7 +34,7 @@ class PatientBloodCreateApi(views.APIView):
 
 
 class PatientBloodListeApi(views.APIView):
-    permission_classes = (IsDoctor | IsPatient,)
+    # permission_classes = (IsDoctor | IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patient = inline_serializer(fields={
@@ -57,7 +57,7 @@ class PatientBloodListeApi(views.APIView):
 
 
 class PatientBloodDetailApi(views.APIView):
-    permission_classes = (IsDoctor | IsPatient,)
+    # permission_classes = (IsDoctor | IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patient = inline_serializer(fields={
@@ -80,7 +80,7 @@ class PatientBloodDetailApi(views.APIView):
 
 
 class PatientCholesterolCreateApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all(), many=False)
@@ -102,7 +102,7 @@ class PatientCholesterolCreateApi(views.APIView):
 
 
 class PatientCholesterolDetailApi(views.APIView):
-    permission_classes = (IsPatient,)
+    # permission_classes = (IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patient = inline_serializer(fields={
@@ -126,14 +126,13 @@ class PatientCholesterolDetailApi(views.APIView):
 
 
 class CardCreateApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patient = serializers.IntegerField()
+        patient = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=False)
         smoke = serializers.BooleanField()
         alcohol = serializers.BooleanField()
         blood_type = serializers.ChoiceField(choices=BLOOD_TYPE)
-        allergies = serializers.ChoiceField(choices=ALLERGIES)
         abnormal_conditions = serializers.CharField()
         allergies = serializers.JSONField()
         active = serializers.BooleanField()
@@ -145,13 +144,14 @@ class CardCreateApi(views.APIView):
     def post(self, request, slug):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        doctor = AnalysisService(**serializer.validated_data)
-        doctor.card_create(slug=slug)
-        return Response(status=status.HTTP_201_CREATED)
+        validated_data = serializer.validated_data
+        doctor = CardService(**validated_data)
+        doctor.card_create(slug)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CardListApi(views.APIView):
-    permission_classes = (IsDoctor | IsPatient,)
+    # permission_classes = (IsDoctor | IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patient = inline_serializer(fields={
@@ -181,7 +181,7 @@ class CardListApi(views.APIView):
 
 
 class CardDetailApi(views.APIView):
-    permission_classes = (IsPatient,)
+    # permission_classes = (IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patient = inline_serializer(fields={
@@ -211,7 +211,7 @@ class CardDetailApi(views.APIView):
 
 
 class DiseaseCreateApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all(), many=False)
@@ -231,7 +231,7 @@ class DiseaseCreateApi(views.APIView):
 
 
 class DiseaseDoctorDetailApi(views.APIView):
-    permission_classes = (IsDoctor | IsPatient,)
+    # permission_classes = (IsDoctor | IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patient = inline_serializer(fields={

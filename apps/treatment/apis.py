@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import serializers
 
-from apps.analysis.permissions import IsDoctor
+from permissions.doctor_permission import IsDoctor
 from apps.treatment.models import Appointment, Conclusion, Medication, Prescription
 from apps.treatment.services import AppointmentService, MedicationService, PrescriptionService
 from apps.users.models import PatientCard

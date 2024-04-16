@@ -19,6 +19,15 @@ class DoctorService:
 
     @transaction.atomic
     def create(self) -> DoctorProfile:
+        """DoctorService's method to create doctor instance
+
+        Raises:
+            PasswordLengthException: _description_
+            EmailException: _description_
+
+        Returns:
+            DoctorProfile: _description_
+        """
 
         if len(self.user['password']) < 8:
             raise PasswordLengthException

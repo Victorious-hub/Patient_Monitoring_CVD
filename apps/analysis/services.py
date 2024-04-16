@@ -28,6 +28,8 @@ class CardService:
     def card_create(self,
                     slug: str,
                     ) -> PatientCard:
+        """Function that creates patient card by doctor's slug instance
+        """
 
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound

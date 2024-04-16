@@ -298,4 +298,5 @@ class DoctorPatientDeleteApi(views.APIView):
         serializer.is_valid(raise_exception=True)
         doctor = DoctorService(**serializer.validated_data)
         doctor.patient_remove(slug=slug)
+        
         return Response(status=status.HTTP_204_NO_CONTENT)

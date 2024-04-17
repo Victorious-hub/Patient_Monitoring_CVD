@@ -202,8 +202,23 @@ class DoctorListApi(views.APIView):
     # permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
-        patient_cards = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
+        patients = inline_serializer(fields={
+            'user.first_name': serializers.CharField(),
+            'user.last_name': serializers.CharField(),
+            'user.email': serializers.EmailField(),
+            'height': serializers.IntegerField(),
+            'weight': serializers.FloatField(),
+            'gender': serializers.ChoiceField(choices=GENDER),
+            'age': serializers.IntegerField(),
+            'birthday': serializers.DateField(),
+        }, many=True)
+        patient_cards = inline_serializer(fields={
+            'blood_type': serializers.BooleanField(),
+            'allergies': serializers.JSONField(),
+            'abnormal_conditions': serializers.CharField(),
+            'smoke': serializers.BooleanField(),
+            'alcohol': serializers.BooleanField(),
+        }, many=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
@@ -224,8 +239,23 @@ class DoctorDetailApi(views.APIView):
     permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
-        patient_cards = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
+        patients = inline_serializer(fields={
+            'user.first_name': serializers.CharField(),
+            'user.last_name': serializers.CharField(),
+            'user.email': serializers.EmailField(),
+            'height': serializers.IntegerField(),
+            'weight': serializers.FloatField(),
+            'gender': serializers.ChoiceField(choices=GENDER),
+            'age': serializers.IntegerField(),
+            'birthday': serializers.DateField(),
+        }, many=True)
+        patient_cards = inline_serializer(fields={
+            'blood_type': serializers.BooleanField(),
+            'allergies': serializers.JSONField(),
+            'abnormal_conditions': serializers.CharField(),
+            'smoke': serializers.BooleanField(),
+            'alcohol': serializers.BooleanField(),
+        }, many=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),

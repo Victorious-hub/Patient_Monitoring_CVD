@@ -1,15 +1,12 @@
 from rest_framework import views, status
 from rest_framework.response import Response
-from permissions.doctor_permission import IsDoctor
-from permissions.patient_permission import IsPatient
+from apps.authentication.services import AuthService
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class UserLogoutAPi(views.APIView):
-    permission_classes = (IsDoctor | IsPatient,)
-
     def post(self, request):
         try:
             refresh_token = request.data["refresh_token"]
@@ -29,5 +26,7 @@ class ObtainTokenAPIView(views.APIView):
         serializer = TokenObtainPairSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         token_data = serializer.validated_data
-        print(token_data['access'])
-        return Response(token_data)
+
+        user_role = AuthService(request.data['email'])
+        token_data['role'] = user_role.get_role()
+        return Response(token_data, status=status.HTTP_201_CREATED)

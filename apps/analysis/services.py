@@ -2,62 +2,13 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, DiseaseAnalysis, PatientCard
 from apps.analysis.tasks import predict_anomaly
-from apps.users.exceptions import DoctorNotFound, PatientCardExists, PatientNotFound
-from apps.users.models import DoctorProfile, PatientProfile
-
-
-class CardService:
-    def __init__(self,
-                 patient: PatientProfile = None,
-                 blood_type: str = None,
-                 allergies: dict = None,
-                 abnormal_conditions: str = None,
-                 smoke: bool = None,
-                 alcohol: bool = None,
-                 active: bool = None
-                 ):
-        self.patient = patient
-        self.blood_type = blood_type
-        self.allergies = allergies
-        self.abnormal_conditions = abnormal_conditions
-        self.smoke = smoke
-        self.alcohol = alcohol
-        self.active = active
-
-    @transaction.atomic
-    def card_create(self,
-                    slug: str,
-                    ) -> PatientCard:
-        """Function that creates patient card by doctor's slug instance
-        """
-
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
-
-        if PatientCard.objects.filter(patient=self.patient).exists():
-            raise PatientCardExists
-
-        doctor = get_object_or_404(DoctorProfile, slug=slug)
-        print(self.patient)
-        patient_card = PatientCard.objects.create(
-            abnormal_conditions=self.abnormal_conditions,
-            patient=self.patient,
-            allergies=self.allergies,
-            smoke=self.smoke,
-            alcohol=self.alcohol,
-            blood_type=self.blood_type,
-            active=self.active
-        )
-
-        patient_card.full_clean()
-        patient_card.save()
-        doctor.patient_cards.add(patient_card)
-
-        return patient_card
+from apps.users.exceptions import DoctorNotFound, PatientCardExists
+from apps.users.models import DoctorProfile
 
 
 class AnalysisService:
     def __init__(self,
+                 patient: int = None,
                  blood_analysis: BloodAnalysis = None,
                  cholesterol_analysis: CholesterolAnalysis = None,
                  anomaly: bool = False,
@@ -75,8 +26,8 @@ class AnalysisService:
                  hdl_cholesterol: float = None,
                  ldl_cholesterol: float = None,
                  triglycerides: float = None,
-                 patient: int = None,
                  ):
+        self.patient = patient
         self.cholesterol_analysis = cholesterol_analysis,
         self.blood_analysis = blood_analysis,
         self.patient_card = patient_card
@@ -94,12 +45,13 @@ class AnalysisService:
         self.hdl_cholesterol = hdl_cholesterol
         self.ldl_cholesterol = ldl_cholesterol
         self.triglycerides = triglycerides
-        self.patient = patient,
 
     @transaction.atomic
     def create_blood_analysis(self,
                               slug: str,
                               ) -> BloodAnalysis:
+        """Method to create a blood analysis for patient
+        """
 
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
@@ -121,6 +73,8 @@ class AnalysisService:
     def create_cholesterol_analysis(self,
                                     slug: str,
                                     ) -> CholesterolAnalysis:
+        """Method to create a cholesterol analysis for patient
+        """
 
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
@@ -143,22 +97,20 @@ class AnalysisService:
     def card_create(self,
                     slug: str,
                     ) -> PatientCard:
+        """Function that creates patient card by doctor's slug instance
+        """
 
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 
-        if not PatientProfile.objects.filter(id=self.patient).exists():
-            raise PatientNotFound
-
         if PatientCard.objects.filter(patient=self.patient).exists():
             raise PatientCardExists
 
-        curr_patient = PatientProfile.objects.get(id=self.patient)
         doctor = get_object_or_404(DoctorProfile, slug=slug)
 
         patient_card = PatientCard.objects.create(
             abnormal_conditions=self.abnormal_conditions,
-            patient=curr_patient,
+            patient=self.patient,
             allergies=self.allergies,
             smoke=self.smoke,
             alcohol=self.alcohol,
@@ -176,6 +128,8 @@ class AnalysisService:
     def create_disease_prediction(self,
                                   slug: str,
                                   ) -> DiseaseAnalysis:
+        """Method to predict a potential cvd anomalies for patient
+        """
 
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
@@ -183,8 +137,8 @@ class AnalysisService:
         patient_card = PatientCard.objects.get(patient=self.patient_card.patient)
         blood_obj = BloodAnalysis.objects.filter(patient=patient_card).last()
         cholesterol_obj = CholesterolAnalysis.objects.filter(patient=patient_card).order_by('id').last()
-        print(patient_card)
-        patient_card.patient.gender = 1
+
+        patient_card.patient.gender = 1 if patient_card.patient.gender == "Male" else 0
         preditction = predict_anomaly([
             blood_obj.ap_hi,
             blood_obj.ap_lo,

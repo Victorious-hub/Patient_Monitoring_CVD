@@ -21,7 +21,8 @@ class MedicationService:
 
     @transaction.atomic
     def create(self) -> Medication:
-
+        """Method to create a medications
+        """
         obj = Medication.objects.create(
             name=self.name,
             dosage=self.dosage,
@@ -44,7 +45,6 @@ class PrescriptionService:
                  end_date: datetime = None,
                  ):
         self.patient_card = patient_card
-        print(self.patient_card)
         self.medication = medication
         self.dosage = dosage
         self.start_date = start_date
@@ -54,6 +54,8 @@ class PrescriptionService:
     def create(self,
                slug: str,
                ) -> Medication:
+        """Method to create a prescription for patient
+        """
 
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
@@ -86,6 +88,8 @@ class AppointmentService:
 
     @transaction.atomic
     def create_appointment(self, slug) -> Conclusion:
+        """Method to place an appointment for patient
+        """
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 
@@ -102,6 +106,8 @@ class AppointmentService:
 
     @transaction.atomic
     def create_conclusion(self, slug) -> Conclusion:
+        """Method to create a conclusion for patient
+        """
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 

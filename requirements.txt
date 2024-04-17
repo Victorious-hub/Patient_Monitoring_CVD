@@ -10,6 +10,8 @@ asttokens==2.4.1
 async-lru==2.0.4
 async-timeout==4.0.3
 attrs==23.2.0
+autobahn==23.6.2
+Automat==22.10.0
 autopep8==2.0.4
 Babel==2.14.0
 beautifulsoup4==4.12.3
@@ -18,7 +20,7 @@ bleach==6.1.0
 celery==5.3.6
 certifi==2023.11.17
 cffi==1.16.0
-channels==4.0.0
+channels==4.1.0
 channels-redis==4.2.0
 charset-normalizer==3.3.2
 cli-helpers==2.3.0
@@ -28,11 +30,13 @@ click-plugins==1.1.1
 click-repl==0.3.0
 comm==0.2.2
 configobj==5.0.8
+constantly==23.10.4
 contourpy==1.2.0
 coverage==7.4.1
 cryptography==42.0.1
 cycler==0.12.1
 dacite==1.8.1
+daphne==4.1.2
 debugpy==1.8.1
 decorator==5.1.1
 defusedxml==0.8.0rc2
@@ -72,8 +76,10 @@ htmlmin==0.1.12
 httpcore==1.0.4
 httpx==0.27.0
 humanize==4.9.0
+hyperlink==21.0.0
 idna==3.6
 ImageHash==4.3.1
+incremental==22.10.0
 inflection==0.5.1
 iniconfig==2.0.0
 ipykernel==6.29.3
@@ -151,6 +157,8 @@ psycopg2==2.9.9
 psycopg2-binary==2.9.9
 ptyprocess==0.7.0
 pure-eval==0.2.2
+pyasn1==0.6.0
+pyasn1_modules==0.4.0
 pycodestyle==2.11.1
 pycparser==2.21
 pydantic==2.6.4
@@ -158,6 +166,7 @@ pydantic_core==2.16.3
 pyflakes==3.2.0
 Pygments==2.17.2
 PyJWT==2.8.0
+pyOpenSSL==24.1.0
 pyparsing==3.1.2
 pytest==8.0.0
 pytest-django==4.8.0
@@ -183,6 +192,7 @@ scikit-learn==1.4.1.post1
 scipy==1.11.4
 seaborn==0.12.2
 Send2Trash==1.8.2
+service-identity==24.1.0
 setproctitle==1.3.3
 six==1.16.0
 sniffio==1.3.1
@@ -202,6 +212,8 @@ tomli==2.0.1
 tornado==6.4
 tqdm==4.66.2
 traitlets==5.14.2
+Twisted==24.3.0
+txaio==23.1.1
 typeguard==4.1.5
 types-python-dateutil==2.9.0.20240316
 typing_extensions==4.9.0
@@ -219,3 +231,4 @@ wordcloud==1.9.3
 xlrd==2.0.1
 xlwt==1.3.0
 ydata-profiling==4.7.0
+zope.interface==6.3

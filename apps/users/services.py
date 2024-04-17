@@ -20,13 +20,6 @@ class DoctorService:
     @transaction.atomic
     def create(self) -> DoctorProfile:
         """DoctorService's method to create doctor instance
-
-        Raises:
-            PasswordLengthException: _description_
-            EmailException: _description_
-
-        Returns:
-            DoctorProfile: _description_
         """
 
         if len(self.user['password']) < 8:
@@ -51,6 +44,9 @@ class DoctorService:
 
     @transaction.atomic
     def contact_update(self, slug: str) -> DoctorProfile:
+        """DoctorService's method for updating
+        """
+
         doctor = get_object_or_404(DoctorProfile, slug=slug)
 
         if CustomUser.objects.filter(email=self.user['email']).exists() and doctor.slug != slug:
@@ -65,6 +61,8 @@ class DoctorService:
     def patient_list_update(self,
                             slug: str,
                             ) -> DoctorProfile:
+        """Method to add patients to doctor's current list of patients
+        """
         doctor = get_object_or_404(DoctorProfile, slug=slug)
 
         doctor.patients.add(*self.patients)  # unpacking
@@ -74,6 +72,8 @@ class DoctorService:
 
     @transaction.atomic
     def patient_remove(self, slug: str) -> DoctorProfile:
+        """If patient is all right, or no need to give some treatment, delete him(her) from list
+        """
         doctor = get_object_or_404(DoctorProfile, slug=slug)
         patient = self.patients
 
@@ -110,7 +110,8 @@ class PatientService:
 
     @transaction.atomic
     def create(self) -> PatientProfile:
-
+        """Method to create a patient instance
+        """
         if len(self.user['password']) < 8:
             raise PasswordLengthException
 
@@ -133,6 +134,8 @@ class PatientService:
 
     @transaction.atomic
     def data_update(self, slug: str) -> PatientProfile:
+        """Method to update patient data like common information
+        """
         patient = get_object_or_404(PatientProfile, slug=slug)
 
         patient.age = self.age
@@ -147,6 +150,8 @@ class PatientService:
 
     @transaction.atomic
     def contact_update(self, slug: str) -> PatientProfile:
+        """Method to update patient contact data like email or phone
+        """
         patient = get_object_or_404(PatientProfile, slug=slug)
         pattern = r'^\+\d{10}$'
         curr_patient = patient.user

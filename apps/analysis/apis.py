@@ -2,7 +2,7 @@ from rest_framework import views
 from rest_framework import serializers
 from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, DiseaseAnalysis, PatientCard
 from apps.analysis.selectors import AnalysisSelector
-from apps.analysis.services import AnalysisService, CardService
+from apps.analysis.services import AnalysisService
 from apps.users.constansts import BLOOD_TYPE
 from rest_framework.response import Response
 from rest_framework import status
@@ -145,7 +145,7 @@ class CardCreateApi(views.APIView):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
-        doctor = CardService(**validated_data)
+        doctor = AnalysisService(**validated_data)
         doctor.card_create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

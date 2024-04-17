@@ -44,6 +44,7 @@ THIRD_PARTY_APPS = [
 ]
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -93,8 +94,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'medtech.wsgi.application'
-# ASGI_APPLICATION = 'medtech.asgi.application'
+# WSGI_APPLICATION = 'medtech.wsgi.application'
+ASGI_APPLICATION = 'medtech.asgi.application'
 
 DATABASES = {
     'default': {
@@ -173,14 +174,14 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True
 }
 
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [('127.0.0.1', 6379)],
-#         },
-#     },
-# }
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 LANGUAGE_CODE = 'en-us'
 

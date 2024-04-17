@@ -12,5 +12,6 @@ class NotificationSelector:
     def list(self, slug) -> Iterable[Notification]:
         patient = get_object_or_404(PatientProfile, slug=slug)
         notifications = Notification.objects.filter(patient=patient)
-
+        for i in notifications:
+            i.is_read = True
         return notifications

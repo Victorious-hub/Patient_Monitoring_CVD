@@ -3,6 +3,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import serializers
 
+from apps.treatment.selectors import PrescriptionSelector
+from apps.users.utils import inline_serializer
 from permissions.doctor_permission import IsDoctor
 from apps.treatment.models import Appointment, Conclusion, Medication, Prescription
 from apps.treatment.services import AppointmentService, MedicationService, PrescriptionService
@@ -47,6 +49,28 @@ class PrescriptionCreateApi(views.APIView):
         prescription = PrescriptionService(**serializer.validated_data)
         prescription.create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class PrescriptionPatientListApi(views.APIView):
+    class OutputSerializer(serializers.Serializer):
+        medication = inline_serializer(fields={
+            'name': serializers.CharField(),
+            'dosage': serializers.CharField(),
+            'description': serializers.CharField(),
+            'created_at': serializers.DateTimeField(),
+        })
+        dosage = serializers.CharField()
+        start_date = serializers.DateField()
+        end_date = serializers.DateField()
+
+        class Meta:
+            model = Prescription
+            fields = ('medication', 'dosage', 'start_date', 'end_date', )
+
+    def get(self, request, slug):
+        prescriptions = PrescriptionSelector()
+        data = self.OutputSerializer(prescriptions.patient_prescription_list(slug), many=True).data
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class AppointmentCreateApi(views.APIView):

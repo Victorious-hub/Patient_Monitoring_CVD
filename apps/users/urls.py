@@ -6,6 +6,7 @@ from .apis import (
     DoctorListApi,
     DoctorPatientAddApi,
     DoctorPatientDeleteApi,
+    DoctorPatientListApi,
     DoctorUpdateApi,
     HelloWorldView,
     PatientCreateApi,
@@ -33,5 +34,6 @@ urlpatterns = [
     path('v1/doctors/<str:slug>/get', DoctorDetailApi.as_view(), name='get_doctor'),
     path('v1/doctors/<str:slug>/contact', DoctorUpdateApi.as_view(), name='contact_doctor_update'),
     path('v1/doctors/patient/<str:slug>/update', DoctorPatientAddApi.as_view(), name='add_doctor_patient_list'),
-    path('v1/doctors/patient/<str:slug>/delete', DoctorPatientDeleteApi.as_view(), name='delete_patient')
+    path('v1/doctors/patient/<str:slug>/delete', DoctorPatientDeleteApi.as_view(), name='delete_patient'),
+    path('v1/doctors/patient/<str:slug>/get', DoctorPatientListApi.as_view(), name='doctor_patients')
 ]

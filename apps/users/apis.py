@@ -5,7 +5,6 @@ from rest_framework import status
 
 from rest_framework.response import Response
 from rest_framework import serializers
-from permissions.doctor_permission import IsDoctor
 from permissions.patient_permission import IsPatient
 from apps.users.constansts import GENDER
 from apps.users.services import (
@@ -236,7 +235,7 @@ class DoctorListApi(views.APIView):
 
 
 class DoctorDetailApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
         patients = inline_serializer(fields={
@@ -273,7 +272,7 @@ class DoctorDetailApi(views.APIView):
 
 
 class DoctorUpdateApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -295,7 +294,7 @@ class DoctorUpdateApi(views.APIView):
 
 
 class DoctorPatientAddApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
@@ -314,10 +313,10 @@ class DoctorPatientAddApi(views.APIView):
 
 
 class DoctorPatientDeleteApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
+        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all())
 
         class Meta:
             model = DoctorProfile
@@ -329,3 +328,26 @@ class DoctorPatientDeleteApi(views.APIView):
         doctor = DoctorService(**serializer.validated_data)
         doctor.patient_remove(slug=slug)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DoctorPatientListApi(views.APIView):
+    class OutputSerializer(serializers.Serializer):
+        patients = inline_serializer(fields={
+            'user.first_name': serializers.CharField(),
+            'user.last_name': serializers.CharField(),
+            'user.email': serializers.EmailField(),
+            'height': serializers.IntegerField(),
+            'weight': serializers.FloatField(),
+            'gender': serializers.ChoiceField(choices=GENDER),
+            'age': serializers.IntegerField(),
+            'birthday': serializers.DateField(),
+        }, many=True)
+
+    class Meta:
+        model = DoctorProfile
+        fields = ('patients',)
+
+    def get(self, request, slug):
+        doctors = DoctorSelector()
+        data = self.OutputSerializer(doctors.get_doctor_patient(slug)).data
+        return Response(data, status=status.HTTP_200_OK)

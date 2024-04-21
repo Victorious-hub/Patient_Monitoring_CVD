@@ -39,7 +39,7 @@ urlpatterns = [
         PatientCholesterolCreateApi.as_view(),
         name='create_cholesterol_analysis'),
     path(
-        'v1/patient/blood/analysis/<str:slug>/get',
+        'v1/patient/blood/<str:slug>/get',
         PatientBloodDetailApi.as_view(),
         name='get_blood_analysis'),
     path(
@@ -51,6 +51,6 @@ urlpatterns = [
         DiseaseDoctorDetailApi.as_view(),
         name='disease_analysis'),
     path(
-        'v1/patient/cholesterol/analysis/<str:slug>/get',
+        'v1/patient/cholesterol/<str:slug>/get',
         PatientCholesterolDetailApi.as_view(),
         name='cholesterol_list_analysis')]

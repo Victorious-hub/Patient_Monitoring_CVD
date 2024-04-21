@@ -21,7 +21,8 @@ class AnalysisSelector:
                            ) -> BloodAnalysis:
         patient = get_object_or_404(PatientProfile, slug=slug)
         patient_card = get_object_or_404(PatientCard, patient=patient)
-        blood_analysis = BloodAnalysis.objects.filter(patient=patient_card).order_by('id').last()
+        blood_analysis = BloodAnalysis.objects.filter(patient=patient_card)
+        # blood_analysis = BloodAnalysis.objects.filter(patient=patient_card).order_by('id').last()
 
         return blood_analysis
 
@@ -31,9 +32,10 @@ class AnalysisSelector:
                                  ) -> CholesterolAnalysis:
         patient = get_object_or_404(PatientProfile, slug=slug)
         patient_card = get_object_or_404(PatientCard, patient=patient)
-        blood_analysis = CholesterolAnalysis.objects.filter(patient=patient_card).order_by('id').last()
+        cholesterol_analysis = CholesterolAnalysis.objects.filter(patient=patient_card)
+        # blood_analysis = CholesterolAnalysis.objects.filter(patient=patient_card).order_by('id').last()
 
-        return blood_analysis
+        return cholesterol_analysis
 
     @transaction.atomic  # Optimized
     def list_disease(self, slug: str) -> DiseaseAnalysis:

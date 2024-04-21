@@ -48,3 +48,12 @@ class DoctorSelector:
     def card_list(self) -> Iterable[PatientCard]:
         cards = PatientCard.objects.all()
         return cards
+
+    @transaction.atomic
+    def get_doctor_patient(self, slug: str) -> Iterable[PatientProfile]:
+        doctor = DoctorProfile.objects.select_related('user').prefetch_related(
+            Prefetch('patient_cards', queryset=PatientCard.objects.all()),
+            Prefetch('patients', queryset=PatientProfile.objects.all())
+        )
+        doctor = doctor.get(slug=slug)
+        return doctor

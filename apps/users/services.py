@@ -53,6 +53,8 @@ class DoctorService:
             raise EmailException
 
         doctor.user.email = self.user['email']
+        doctor.user.first_name = self.user['first_name']
+        doctor.user.last_name = self.user['last_name']
         doctor.user.save()
 
         return doctor

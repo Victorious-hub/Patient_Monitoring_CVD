@@ -1,7 +1,9 @@
 
 from typing import Iterable
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from apps.treatment.models import Medication, Prescription
+from apps.users.models import PatientCard, PatientProfile
 
 
 class MedicationSelector:
@@ -19,12 +21,9 @@ class PrescriptionSelector:
         prescriptions = Prescription.objects.all()
         return prescriptions
 
-    # @transaction.atomic
-    # def patient_prescription_list(self,
-    #                             slug: str
-    #                             ) -> Iterable[Prescription]:
-
-    #     patient = get_object_or_404(PatientProfile, slug=slug)
-    #     patient_card = PatientCard.objects.get(patient=patient)
-    #     prescriptions = get_object_or_404(Prescription, patient_card=slug)
-    #     return prescriptions
+    @transaction.atomic
+    def patient_prescription_list(self, slug: str) -> Iterable[Prescription]:
+        patient = get_object_or_404(PatientProfile, slug=slug)
+        patient_card = PatientCard.objects.get(patient=patient)
+        prescriptions = Prescription.objects.filter(patient_card=patient_card)
+        return prescriptions

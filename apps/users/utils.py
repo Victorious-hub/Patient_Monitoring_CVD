@@ -1,3 +1,5 @@
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from rest_framework.views import exception_handler
 from rest_framework import serializers
 
@@ -23,3 +25,14 @@ def inline_serializer(*, fields, data=None, **kwargs):
         return serializer_class(data=data, **kwargs)
 
     return serializer_class(**kwargs)
+
+
+def get_object(model_or_queryset, **kwargs):
+    """
+    Reuse get_object_or_404 since the implementation supports both Model && queryset.
+    Catch Http404 & return None
+    """
+    try:
+        return get_object_or_404(model_or_queryset, **kwargs)
+    except Http404:
+        return None

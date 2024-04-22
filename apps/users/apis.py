@@ -5,11 +5,12 @@ from rest_framework import status
 
 from rest_framework.response import Response
 from rest_framework import serializers
-from permissions.patient_permission import IsPatient
 from apps.users.constansts import GENDER
 from apps.users.services import (
+    # DoctorService,
     DoctorService,
     PatientService,
+    RegistrationService,
 )
 
 from apps.users.selectors import (
@@ -49,8 +50,8 @@ class PatientCreateApi(views.APIView):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        patient = PatientService(**serializer.validated_data)
-        patient.create()
+        patient = RegistrationService(**serializer.validated_data)
+        patient.patient_create()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -69,16 +70,15 @@ class PatientUpdateDataApi(views.APIView):
             fields = ('weight', 'height', 'gender', 'age', 'birthday')
 
     def put(self, request, slug):
-        print(request.data)
         serializer = self.InputSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         patient_service = PatientService(**serializer.validated_data)
-        patient_service.data_update(slug)
+        patient_service.patient_update_data(slug)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PatientUpdateContactApi(views.APIView):
-    permission_classes = (IsPatient,)
+    # permission_classes = (IsPatient,)
 
     class InputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -93,10 +93,11 @@ class PatientUpdateContactApi(views.APIView):
             fields = ('user', 'mobile',)
 
     def put(self, request, slug):
+        print(request.data)
         serializer = self.InputSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         patient = PatientService(**serializer.validated_data)
-        patient.contact_update(slug)
+        patient.patient_update_contact(slug)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -150,7 +151,7 @@ class PatientListApi(views.APIView):
 
 
 class PatientDetailApi(views.APIView):
-    permission_classes = (IsPatient,)
+    # permission_classes = (IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         weight = serializers.FloatField(),
@@ -192,8 +193,8 @@ class DoctorCreateApi(views.APIView):
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        doctor = DoctorService(**serializer.validated_data)
-        doctor.create()
+        doctor = RegistrationService(**serializer.validated_data)
+        doctor.doctor_create()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -289,7 +290,7 @@ class DoctorUpdateApi(views.APIView):
         serializer = self.InputSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         doctor = DoctorService(**serializer.validated_data)
-        doctor.contact_update(slug)
+        doctor.doctor_contact_update(slug)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

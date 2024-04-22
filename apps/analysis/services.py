@@ -136,7 +136,7 @@ class AnalysisService:
 
         patient_card = PatientCard.objects.get(patient=self.patient_card.patient)
         blood_obj = BloodAnalysis.objects.filter(patient=patient_card).last()
-        cholesterol_obj = CholesterolAnalysis.objects.filter(patient=patient_card).order_by('id').last()
+        cholesterol_obj = CholesterolAnalysis.objects.filter(patient=patient_card).last()
 
         patient_card.patient.gender = 1 if patient_card.patient.gender == "Male" else 0
         preditction = predict_anomaly([

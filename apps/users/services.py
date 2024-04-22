@@ -1,92 +1,97 @@
 from datetime import datetime
 import re
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-
 from apps.users.models import DoctorProfile, PatientProfile, CustomUser
 from django.contrib.auth.hashers import make_password
 from apps.users.exceptions import EmailException, MobileException, \
     PasswordLengthException
+from apps.users.utils import get_object
 
 
-class DoctorService:
+class HandlerMixin:
+    PATTERN = r'^\+\d{10}$'
+
+    def _validate_credentials(
+        self,
+        password: str,
+        email: str,
+        patient_slug: PatientProfile | DoctorProfile = None,
+        slug: str = None
+    ):
+        if len(password) < 8:
+            raise PasswordLengthException
+
+        if CustomUser.objects.filter(email=email).exists():
+            raise EmailException
+
+        if CustomUser.objects.filter(email=email).exists() and patient_slug.slug != slug:
+            raise EmailException
+
+    def _validate_mobile(
+        self,
+        mobile: str,
+        patient_slug: PatientProfile,
+        slug: str
+    ):
+        if PatientProfile.objects.filter(mobile=mobile).exists() and patient_slug != slug \
+                or not re.match(self.PATTERN, mobile):
+            raise MobileException
+
+    def _validate_update_data(
+        self,
+        email: str,
+        patient_slug: PatientProfile,
+        slug: str
+    ):
+        if CustomUser.objects.filter(email=email).exists() and patient_slug != slug:
+            raise EmailException
+
+
+class RegistrationService(HandlerMixin):
     def __init__(self,
                  user: CustomUser = None,
-                 patients: PatientProfile = None,
                  ):
-        self.patients = patients
         self.user = user
 
+    def create_user(self, user_data, role):
+        new_user = CustomUser.objects.create(
+            **user_data,
+            role=role
+        )
+        new_user.password = make_password(new_user.password)
+        new_user.save()
+        return new_user
+
     @transaction.atomic
-    def create(self) -> DoctorProfile:
+    def doctor_create(self) -> DoctorProfile:
         """DoctorService's method to create doctor instance
         """
 
-        if len(self.user['password']) < 8:
-            raise PasswordLengthException
+        self._validate_credentials()
+        user = self.create_user(self.user, role='D')
 
-        if CustomUser.objects.filter(email=self.user['email']).exists():
-            raise EmailException
-
-        new_user = CustomUser.objects.create(
-            email=self.user['email'],
-            password=make_password(self.user['password']),
-            first_name=self.user['first_name'],
-            last_name=self.user['last_name'],
-            role='D'
-        )
-
-        obj = DoctorProfile.objects.create(user=new_user)
+        obj = DoctorProfile.objects.create(user=user)
         obj.full_clean()
         obj.save()
 
         return obj
 
     @transaction.atomic
-    def contact_update(self, slug: str) -> DoctorProfile:
-        """DoctorService's method for updating
+    def patient_create(self) -> PatientProfile:
+        """Method to create a patient instance
         """
 
-        doctor = get_object_or_404(DoctorProfile, slug=slug)
+        self._validate_credentials(self.user['password'], self.user['email'])
+        user = self.create_user(self.user, role='P')
 
-        if CustomUser.objects.filter(email=self.user['email']).exists() and doctor.slug != slug:
-            raise EmailException
+        obj = PatientProfile.objects.create(user=user)
+        obj.full_clean()
+        obj.save()
 
-        doctor.user.email = self.user['email']
-        doctor.user.first_name = self.user['first_name']
-        doctor.user.last_name = self.user['last_name']
-        doctor.user.save()
-
-        return doctor
-
-    @transaction.atomic
-    def patient_list_update(self,
-                            slug: str,
-                            ) -> DoctorProfile:
-        """Method to add patients to doctor's current list of patients
-        """
-        doctor = get_object_or_404(DoctorProfile, slug=slug)
-
-        doctor.patients.add(*self.patients)  # unpacking
-        doctor.save()
-
-        return doctor
-
-    @transaction.atomic
-    def patient_remove(self, slug: str) -> DoctorProfile:
-        """If patient is all right, or no need to give some treatment, delete him(her) from list
-        """
-        doctor = get_object_or_404(DoctorProfile, slug=slug)
-        patient = self.patients
-
-        if patient in doctor.patients.all():
-            doctor.patients.remove(patient)
-            doctor.save()
-
-        return doctor
+        return obj
 
 
-class PatientService:
+class PatientService(HandlerMixin):
     def __init__(self,
                  user: CustomUser = None,
                  weight: float = None,
@@ -95,9 +100,6 @@ class PatientService:
                  birthday: datetime = None,
                  age: int = None,
                  mobile: str = None,
-                 new_password: str = None,
-                 password_confirm: str = None,
-                 slug: str = None,
                  ):
         self.mobile = mobile
         self.user = user
@@ -106,39 +108,12 @@ class PatientService:
         self.age = age
         self.birthday = birthday
         self.gender = gender
-        self.new_password = new_password
-        self.password_confirm = password_confirm
-        self.slug = slug
 
     @transaction.atomic
-    def create(self) -> PatientProfile:
-        """Method to create a patient instance
-        """
-        if len(self.user['password']) < 8:
-            raise PasswordLengthException
-
-        if CustomUser.objects.filter(email=self.user['email']).exists():
-            raise EmailException
-
-        new_user = CustomUser.objects.create(
-            first_name=self.user['first_name'],
-            last_name=self.user['last_name'],
-            password=make_password(self.user['password']),
-            email=self.user['email'],
-            role='P'
-        )
-
-        obj = PatientProfile.objects.create(user=new_user)
-        obj.full_clean()
-        obj.save()
-
-        return obj
-
-    @transaction.atomic
-    def data_update(self, slug: str) -> PatientProfile:
+    def patient_update_data(self, slug: str) -> PatientProfile:
         """Method to update patient data like common information
         """
-        patient = get_object_or_404(PatientProfile, slug=slug)
+        patient = get_object(PatientProfile, slug=slug)
 
         patient.age = self.age
         patient.height = self.height
@@ -151,29 +126,79 @@ class PatientService:
         return patient
 
     @transaction.atomic
-    def contact_update(self, slug: str) -> PatientProfile:
+    def patient_update_contact(
+        self,
+        slug: str
+    ) -> PatientProfile:
         """Method to update patient contact data like email or phone
         """
-        patient = get_object_or_404(PatientProfile, slug=slug)
-        pattern = r'^\+\d{10}$'
-        curr_patient = patient.user
+        patient = get_object(PatientProfile, slug=slug)
 
-        if CustomUser.objects.filter(email=self.user['email']).exists() and patient.slug != slug:
-            raise EmailException
-
-        if PatientProfile.objects.filter(mobile=self.mobile).exists() and patient.slug != slug \
-                or not re.match(pattern, self.mobile):
-            raise MobileException
+        self._validate_mobile(self.mobile, patient.slug, slug)
+        self._validate_update_data(patient.user.email, patient.slug, slug)
 
         patient.mobile = self.mobile
-        curr_patient.first_name = self.user['first_name']
-        curr_patient.last_name = self.user['last_name']
-        curr_patient.email = self.user['email']
-        curr_patient.save()
+        patient.user.first_name = self.user['first_name']
+        patient.user.last_name = self.user['last_name']
+        patient.user.email = self.user['email']
+        patient.user.save()
         patient.save()
 
         return patient
 
+
+class DoctorService(HandlerMixin):
+    def __init__(self,
+                 user: CustomUser = None,
+                 patients: PatientProfile = None,
+                 ):
+        self.patients = patients
+        self.user = user
+
     @transaction.atomic
-    def change_password(self, slug: str) -> PatientProfile:
-        pass
+    def doctor_contact_update(
+        self,
+        slug: str
+    ) -> DoctorProfile:
+        """DoctorService's method for updating
+        """
+
+        doctor = get_object(DoctorProfile, slug=slug)
+        self._validate_update_data(doctor.user.email, doctor.slug, slug)
+
+        doctor.user.email = self.user['email']
+        doctor.user.first_name = self.user['first_name']
+        doctor.user.last_name = self.user['last_name']
+        doctor.user.save()
+
+        return doctor
+
+    @transaction.atomic
+    def patient_list_update(
+        self,
+        slug: str,
+    ) -> DoctorProfile:
+        """Method to add patients to doctor's current list of patients
+        """
+        doctor = get_object(DoctorProfile, slug=slug)
+
+        doctor.patients.add(*self.patients)  # unpacking
+        doctor.save()
+
+        return doctor
+
+    @transaction.atomic
+    def patient_remove(
+        self,
+        slug: str
+    ) -> DoctorProfile:
+        """If patient is all right, or no need to give some treatment, delete him(her) from list
+        """
+        doctor = get_object(DoctorProfile, slug=slug)
+        patient = self.patients
+
+        if patient in doctor.patients.all():
+            doctor.patients.remove(patient)
+            doctor.save()
+
+        return doctor

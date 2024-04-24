@@ -4,6 +4,7 @@ from .apis import (
     CardCreateApi,
     CardDetailApi,
     CardListApi,
+    ConclusionCreateApi,
     DiseaseCreateApi,
     DiseaseDoctorDetailApi,
     PatientBloodCreateApi,
@@ -50,6 +51,10 @@ urlpatterns = [
         'v1/patient/disease/analysis/<str:slug>/get',
         DiseaseDoctorDetailApi.as_view(),
         name='disease_analysis'),
+    path(
+        'v1/patient/conclusion/<str:slug>/create',
+        ConclusionCreateApi.as_view(),
+        name='create_appointment'),
     path(
         'v1/patient/cholesterol/<str:slug>/get',
         PatientCholesterolDetailApi.as_view(),

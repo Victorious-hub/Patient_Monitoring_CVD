@@ -2,9 +2,10 @@ import datetime
 import time
 from django.db import transaction
 
-from apps.treatment.models import Appointment, Conclusion, Medication, Prescription
+from apps.treatment.models import Appointment, Medication, Prescription
 from apps.users.exceptions import DoctorNotFound
 from apps.users.models import DoctorProfile, PatientCard
+from apps.users.tasks import send_appointment
 
 
 class MedicationService:
@@ -20,7 +21,7 @@ class MedicationService:
         self.created_at = created_at
 
     @transaction.atomic
-    def create(self) -> Medication:
+    def create_medication(self) -> Medication:
         """Method to create a medications
         """
         obj = Medication.objects.create(
@@ -36,24 +37,31 @@ class MedicationService:
         return obj
 
 
-class PrescriptionService:
+class TreatmentService:
     def __init__(self,
                  patient_card: PatientCard = None,
                  medication: Medication = None,
                  dosage: str = None,
                  start_date: datetime = None,
                  end_date: datetime = None,
+                 appointment_date: datetime = None,
+                 appointment_time: time = None,
+                 text: str = None,
                  ):
         self.patient_card = patient_card
         self.medication = medication
         self.dosage = dosage
         self.start_date = start_date
         self.end_date = end_date
+        self.text = text
+        self.appointment_date = appointment_date
+        self.appointment_time = appointment_time
 
     @transaction.atomic
-    def create(self,
-               slug: str,
-               ) -> Medication:
+    def create_prescription(
+        self,
+        slug: str,
+    ) -> Medication:
         """Method to create a prescription for patient
         """
 
@@ -73,21 +81,11 @@ class PrescriptionService:
 
         return obj
 
-
-class AppointmentService:
-    def __init__(self,
-                 patient_card: PatientCard = None,
-                 appointment_date: datetime = None,
-                 appointment_time: time = None,
-                 text: str = None,
-                 ):
-        self.patient_card = patient_card
-        self.text = text
-        self.appointment_date = appointment_date
-        self.appointment_time = appointment_time
-
     @transaction.atomic
-    def create_appointment(self, slug) -> Conclusion:
+    def create_appointment(
+        self,
+        slug: str
+    ) -> Appointment:
         """Method to place an appointment for patient
         """
         if not DoctorProfile.objects.filter(slug=slug).exists():
@@ -99,21 +97,8 @@ class AppointmentService:
             appointment_time=self.appointment_time
         )
 
-        obj.full_clean()
-        obj.save()
-
-        return obj
-
-    @transaction.atomic
-    def create_conclusion(self, slug) -> Conclusion:
-        """Method to create a conclusion for patient
-        """
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
-
-        obj = Conclusion.objects.create(
-            patient_card=self.patient_card,
-            text=self.text,
+        transaction.on_commit(
+            lambda: send_appointment.delay(slug)
         )
 
         obj.full_clean()

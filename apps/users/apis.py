@@ -17,7 +17,6 @@ from apps.users.selectors import (
     DoctorSelector,
     PatientSelector
 )
-from apps.users.tasks import doctor_patient_add
 from apps.users.utils import inline_serializer
 
 from .models import (
@@ -146,7 +145,7 @@ class PatientListApi(views.APIView):
 
     def get(self, request):
         patients = PatientSelector()
-        data = self.OutputSerializer(patients.list(), many=True).data
+        data = self.OutputSerializer(patients.patient_list(), many=True).data
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -173,7 +172,7 @@ class PatientDetailApi(views.APIView):
 
     def get(self, request, slug):
         patients = PatientSelector()
-        data = self.OutputSerializer(patients.get(slug=slug)).data
+        data = self.OutputSerializer(patients.patient_get(slug=slug)).data
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -231,7 +230,7 @@ class DoctorListApi(views.APIView):
 
     def get(self, request):
         doctors = DoctorSelector()
-        data = self.OutputSerializer(doctors.list(), many=True).data
+        data = self.OutputSerializer(doctors.doctor_list(), many=True).data
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -268,7 +267,7 @@ class DoctorDetailApi(views.APIView):
 
     def get(self, request, slug):
         doctors = DoctorSelector()
-        data = self.OutputSerializer(doctors.get(slug=slug)).data
+        data = self.OutputSerializer(doctors.doctor_get(slug=slug)).data
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -309,7 +308,6 @@ class DoctorPatientAddApi(views.APIView):
         serializer.is_valid(raise_exception=True)
         doctor = DoctorService(**serializer.validated_data)
         doctor.patient_list_update(slug=slug)
-        doctor_patient_add.delay(slug)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -350,5 +348,5 @@ class DoctorPatientListApi(views.APIView):
 
     def get(self, request, slug):
         doctors = DoctorSelector()
-        data = self.OutputSerializer(doctors.get_doctor_patient(slug)).data
+        data = self.OutputSerializer(doctors.doctor_get_patients(slug)).data
         return Response(data, status=status.HTTP_200_OK)

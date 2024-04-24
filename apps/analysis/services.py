@@ -1,9 +1,11 @@
+import os
+import pickle
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, DiseaseAnalysis, PatientCard
-from apps.analysis.tasks import predict_anomaly
+import numpy as np
+from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, Conclusion, Diagnosis, PatientCard
 from apps.users.exceptions import DoctorNotFound, PatientCardExists
 from apps.users.models import DoctorProfile
+from apps.users.utils import get_object
 
 
 class AnalysisService:
@@ -12,7 +14,7 @@ class AnalysisService:
                  blood_analysis: BloodAnalysis = None,
                  cholesterol_analysis: CholesterolAnalysis = None,
                  anomaly: bool = False,
-                 patient_card: int = None,
+                 patient_card: PatientCard = None,
                  glucose: float = None,
                  ap_hi: float = None,
                  ap_lo: float = None,
@@ -26,7 +28,11 @@ class AnalysisService:
                  hdl_cholesterol: float = None,
                  ldl_cholesterol: float = None,
                  triglycerides: float = None,
+                 description: str = None,
+                 recommendations: str = None,
                  ):
+        self.recommendations = recommendations
+        self.description = description
         self.patient = patient
         self.cholesterol_analysis = cholesterol_analysis,
         self.blood_analysis = blood_analysis,
@@ -46,8 +52,17 @@ class AnalysisService:
         self.ldl_cholesterol = ldl_cholesterol
         self.triglycerides = triglycerides
 
+    def _predict_anomaly(self, features: list):
+        model_path = os.path.join(os.path.dirname(__file__), 'model', 'anomaly_prediction.pkl')
+        with open(model_path, 'rb') as file:
+            model = pickle.load(file)
+
+        new_data = np.array(list(features)).reshape(1, -1)
+        predicted_anomaly = model.predict(new_data)[0]
+        return predicted_anomaly
+
     @transaction.atomic
-    def create_blood_analysis(self,
+    def blood_analysis_create(self,
                               slug: str,
                               ) -> BloodAnalysis:
         """Method to create a blood analysis for patient
@@ -56,7 +71,7 @@ class AnalysisService:
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 
-        patient_card = PatientCard.objects.get(patient=self.patient_card.patient)
+        patient_card = get_object(PatientCard, patient=self.patient_card.patient)
 
         obj = BloodAnalysis.objects.create(
             patient=patient_card,
@@ -70,16 +85,16 @@ class AnalysisService:
         return obj
 
     @transaction.atomic
-    def create_cholesterol_analysis(self,
-                                    slug: str,
-                                    ) -> CholesterolAnalysis:
+    def chol_analysis_create(self,
+                             slug: str,
+                             ) -> CholesterolAnalysis:
         """Method to create a cholesterol analysis for patient
         """
 
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 
-        patient_card = PatientCard.objects.get(patient=self.patient_card.patient)
+        patient_card = get_object(PatientCard, patient=self.patient_card.patient)
 
         obj = CholesterolAnalysis.objects.create(
             patient=patient_card,
@@ -106,7 +121,7 @@ class AnalysisService:
         if PatientCard.objects.filter(patient=self.patient).exists():
             raise PatientCardExists
 
-        doctor = get_object_or_404(DoctorProfile, slug=slug)
+        doctor = get_object(DoctorProfile, slug=slug)
 
         patient_card = PatientCard.objects.create(
             abnormal_conditions=self.abnormal_conditions,
@@ -125,21 +140,22 @@ class AnalysisService:
         return patient_card
 
     @transaction.atomic
-    def create_disease_prediction(self,
-                                  slug: str,
-                                  ) -> DiseaseAnalysis:
+    def diagnosis_create(
+        self,
+        slug: str,
+    ) -> Diagnosis:
         """Method to predict a potential cvd anomalies for patient
         """
 
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 
-        patient_card = PatientCard.objects.get(patient=self.patient_card.patient)
+        patient_card = get_object(PatientCard, patient=self.patient_card.patient)
         blood_obj = BloodAnalysis.objects.filter(patient=patient_card).last()
         cholesterol_obj = CholesterolAnalysis.objects.filter(patient=patient_card).last()
 
         patient_card.patient.gender = 1 if patient_card.patient.gender == "Male" else 0
-        preditction = predict_anomaly([
+        preditction = self._predict_anomaly([
             blood_obj.ap_hi,
             blood_obj.ap_lo,
             blood_obj.glucose,
@@ -155,12 +171,33 @@ class AnalysisService:
 
         print(f"Anomaly: {preditction}")
 
-        obj = DiseaseAnalysis.objects.create(
+        obj = Diagnosis.objects.create(
             patient=patient_card,
             blood_analysis=blood_obj,
             cholesterol_analysis=cholesterol_obj,
             anomaly=preditction,
         )
+        obj.full_clean()
+        obj.save()
+
+        return obj
+
+    @transaction.atomic
+    def conclusion_create(self, slug) -> Conclusion:
+        """Method to create a conclusion for patient
+        """
+        if not DoctorProfile.objects.filter(slug=slug).exists():
+            raise DoctorNotFound
+
+        patient_card = get_object(PatientCard, patient=self.patient_card.patient)
+        analysis = get_object(Diagnosis, patient_card=patient_card)
+
+        obj = Conclusion.objects.create(
+            analysis_result=analysis,
+            description=self.description,
+            recommendations=self.recommendations,
+        )
+
         obj.full_clean()
         obj.save()
 

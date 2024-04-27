@@ -2,13 +2,13 @@ import os
 import pickle
 from django.db import transaction
 import numpy as np
+from .mixins import ValidationMixin
 from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, Conclusion, Diagnosis, PatientCard
-from apps.users.exceptions import DoctorNotFound, PatientCardExists
 from apps.users.models import DoctorProfile
 from apps.users.utils import get_object
 
 
-class AnalysisService:
+class AnalysisService(ValidationMixin):
     def __init__(self,
                  patient: int = None,
                  blood_analysis: BloodAnalysis = None,
@@ -68,9 +68,7 @@ class AnalysisService:
         """Method to create a blood analysis for patient
         """
 
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
-
+        self._check_doctor_exists(slug)
         patient_card = get_object(PatientCard, patient=self.patient_card.patient)
 
         obj = BloodAnalysis.objects.create(
@@ -91,8 +89,7 @@ class AnalysisService:
         """Method to create a cholesterol analysis for patient
         """
 
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
+        self._check_doctor_exists(slug)
 
         patient_card = get_object(PatientCard, patient=self.patient_card.patient)
 
@@ -115,13 +112,10 @@ class AnalysisService:
         """Function that creates patient card by doctor's slug instance
         """
 
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
+        self._check_doctor_exists(slug)
+        self._card_exists(self.patient)
 
-        if PatientCard.objects.filter(patient=self.patient).exists():
-            raise PatientCardExists
-
-        doctor = get_object(DoctorProfile, slug=slug)
+        doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
 
         patient_card = PatientCard.objects.create(
             abnormal_conditions=self.abnormal_conditions,
@@ -147,10 +141,9 @@ class AnalysisService:
         """Method to predict a potential cvd anomalies for patient
         """
 
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
+        self._check_doctor_exists(slug)
 
-        patient_card = get_object(PatientCard, patient=self.patient_card.patient)
+        patient_card: PatientCard = get_object(PatientCard, patient=self.patient_card.patient)
         blood_obj = BloodAnalysis.objects.filter(patient=patient_card).last()
         cholesterol_obj = CholesterolAnalysis.objects.filter(patient=patient_card).last()
 
@@ -186,8 +179,7 @@ class AnalysisService:
     def conclusion_create(self, slug) -> Conclusion:
         """Method to create a conclusion for patient
         """
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
+        self._check_doctor_exists(slug)
 
         patient_card = get_object(PatientCard, patient=self.patient_card.patient)
         analysis = get_object(Diagnosis, patient_card=patient_card)

@@ -15,3 +15,10 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.message
+
+
+class Test(models.Model):
+    message = models.TextField()
+
+    def __str__(self):
+        return self.message

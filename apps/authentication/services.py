@@ -9,6 +9,6 @@ class AuthService:
         self.email = email
 
     @transaction.atomic
-    def get_role(self):
+    def role_get(self):
         user = CustomUser.objects.get(email=self.email)
         return user.role

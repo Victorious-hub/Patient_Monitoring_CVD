@@ -9,7 +9,7 @@ from apps.users.utils import get_object
 
 
 @shared_task()
-def doctor_patient_add(slug: str):
+def add_patient(slug: str):
     patient = DoctorProfile.objects.get(slug=slug).patients.order_by('id').last()
     doctor = get_object(DoctorProfile, slug=slug)
 

@@ -1,6 +1,6 @@
 from rest_framework import views, status
 from rest_framework.response import Response
-from apps.authentication.services import AuthService
+from .services import AuthService
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -29,5 +29,5 @@ class ObtainTokenAPIView(views.APIView):
         token_data = serializer.validated_data
 
         user_role = AuthService(request.data['email'])
-        token_data['role'] = user_role.get_role()
+        token_data['role'] = user_role.role_get()
         return Response(token_data, status=status.HTTP_201_CREATED)

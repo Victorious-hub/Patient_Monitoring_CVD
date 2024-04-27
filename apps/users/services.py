@@ -3,7 +3,7 @@ from django.db import transaction
 from apps.users.mixins import HandlerMixin
 from apps.users.models import DoctorProfile, PatientProfile, CustomUser
 from django.contrib.auth.hashers import make_password
-from apps.users.tasks import doctor_patient_add
+from apps.users.tasks import add_patient
 from apps.users.utils import get_object
 
 
@@ -27,7 +27,7 @@ class RegistrationService(HandlerMixin):
         """DoctorService's method to create doctor instance
         """
 
-        self._validate_credentials()
+        self._validate_credentials(self.user['password'], self.user['email'])
         user = self.create_user(self.user, role='D')
 
         obj = DoctorProfile.objects.create(user=user)
@@ -73,7 +73,7 @@ class PatientService(HandlerMixin):
     def patient_update_data(self, slug: str) -> PatientProfile:
         """Method to update patient data like common information
         """
-        patient = get_object(PatientProfile, slug=slug)
+        patient: PatientProfile = get_object(PatientProfile, slug=slug)
 
         patient.age = self.age
         patient.height = self.height
@@ -92,7 +92,7 @@ class PatientService(HandlerMixin):
     ) -> PatientProfile:
         """Method to update patient contact data like email or phone
         """
-        patient = get_object(PatientProfile, slug=slug)
+        patient: PatientProfile = get_object(PatientProfile, slug=slug)
 
         self._validate_mobile(self.mobile, patient.slug, slug)
         self._validate_update_data(patient.user.email, patient.slug, slug)
@@ -123,7 +123,7 @@ class DoctorService(HandlerMixin):
         """DoctorService's method for updating
         """
 
-        doctor = get_object(DoctorProfile, slug=slug)
+        doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
         self._validate_update_data(doctor.user.email, doctor.slug, slug)
 
         doctor.user.email = self.user['email']
@@ -140,13 +140,13 @@ class DoctorService(HandlerMixin):
     ) -> DoctorProfile:
         """Method to add patients to doctor's current list of patients
         """
-        doctor = get_object(DoctorProfile, slug=slug)
+        doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
 
         doctor.patients.add(*self.patients)  # unpacking
         doctor.save()
 
         transaction.on_commit(
-            lambda: doctor_patient_add.delay(slug)
+            lambda: add_patient.delay(slug)
         )
 
         return doctor
@@ -158,7 +158,7 @@ class DoctorService(HandlerMixin):
     ) -> DoctorProfile:
         """If patient is all right, or no need to give some treatment, delete him(her) from list
         """
-        doctor = get_object(DoctorProfile, slug=slug)
+        doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
         patient = self.patients
 
         if patient in doctor.patients.all():

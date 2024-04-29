@@ -207,7 +207,7 @@ class DiseaseCreateApi(views.APIView):
 
         class Meta:
             model = Diagnosis
-            fields = ('patient_card', 'anomaly',)
+            fields = ('patient_card',)
 
     def post(self, request, slug):
         serializer = self.InputSerializer(data=request.data)

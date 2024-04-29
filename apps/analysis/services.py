@@ -2,15 +2,32 @@ import os
 import pickle
 from django.db import transaction
 import numpy as np
+
 from .mixins import ValidationMixin
-from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, Conclusion, Diagnosis, PatientCard
-from apps.users.models import DoctorProfile
+
+from apps.users.models import DoctorProfile, PatientProfile
 from apps.users.utils import get_object
+
+from .tasks import (
+    blood_analysis_notificate, 
+    card_creation_notificate, 
+    cholesterol_analysis_notificate, 
+    conclusion_notificate, 
+    diagnosis_notificate
+)
+
+from apps.analysis.models import (
+    BloodAnalysis, 
+    CholesterolAnalysis, 
+    Conclusion, 
+    Diagnosis, 
+    PatientCard
+)
 
 
 class AnalysisService(ValidationMixin):
     def __init__(self,
-                 patient: int = None,
+                 patient: PatientProfile = None,
                  blood_analysis: BloodAnalysis = None,
                  cholesterol_analysis: CholesterolAnalysis = None,
                  anomaly: bool = False,
@@ -80,6 +97,10 @@ class AnalysisService(ValidationMixin):
         obj.full_clean()
         obj.save()
 
+        transaction.on_commit(
+            lambda: blood_analysis_notificate.delay(slug, self.patient_card.patient.slug)
+        )
+
         return obj
 
     @transaction.atomic
@@ -102,6 +123,10 @@ class AnalysisService(ValidationMixin):
         )
         obj.full_clean()
         obj.save()
+
+        transaction.on_commit(
+            lambda: cholesterol_analysis_notificate.delay(slug, self.patient_card.patient.slug)
+        )
 
         return obj
 
@@ -130,6 +155,10 @@ class AnalysisService(ValidationMixin):
         patient_card.full_clean()
         patient_card.save()
         doctor.patient_cards.add(patient_card)
+
+        transaction.on_commit(
+            lambda: card_creation_notificate.delay(slug, self.patient.slug)
+        )
 
         return patient_card
 
@@ -173,6 +202,10 @@ class AnalysisService(ValidationMixin):
         obj.full_clean()
         obj.save()
 
+        transaction.on_commit(
+            lambda: diagnosis_notificate.delay(slug, self.patient_card.patient.slug)
+        )
+
         return obj
 
     @transaction.atomic
@@ -192,5 +225,9 @@ class AnalysisService(ValidationMixin):
 
         obj.full_clean()
         obj.save()
+
+        transaction.on_commit(
+            lambda: conclusion_notificate.delay(slug, self.patient_card.patient.slug)
+        )
 
         return obj

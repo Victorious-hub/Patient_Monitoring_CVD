@@ -14,6 +14,7 @@ def add_patient(slug: str):
     doctor = get_object(DoctorProfile, slug=slug)
 
     notification = Notification.objects.create(
+        notification_type='DL',
         patient=patient,
         message=f"You were added to {doctor} list",
         is_read=False,
@@ -31,6 +32,7 @@ def send_appointment(slug: str) -> Notification:
     doctor = get_object(DoctorProfile, slug=slug)
 
     notification = Notification.objects.create(
+        notification_type='AP',
         patient=patient,
         message=f"Doctor {doctor} has indidcated an appointment for you",
         is_read=False,

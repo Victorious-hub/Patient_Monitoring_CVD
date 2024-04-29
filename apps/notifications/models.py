@@ -1,9 +1,18 @@
 from django.db import models
-
+from django.utils.translation import gettext_lazy as _
 from apps.users.models import PatientProfile
 
 
 class Notification(models.Model):
+    class NotificationType(models.TextChoices):
+        ANALYSIS = 'AN', _('Analysis')
+        DOCTOR_LIST = 'DL', _('DoctorList')
+        APPOINTMENT = 'AP', _('Appointment')
+        CARD = 'CD', _('Card')
+        DIAGNOSIS = 'DA', _('Diagnosis')
+        CONCLUSION = 'CU', _('Conclusion')
+
+    notification_type = models.CharField(max_length=2, choices=NotificationType.choices, default=NotificationType.ANALYSIS)
     patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE)
     message = models.TextField()
     is_read = models.BooleanField(default=False)

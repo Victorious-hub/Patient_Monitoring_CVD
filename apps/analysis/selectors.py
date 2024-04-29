@@ -2,8 +2,6 @@ from django.db import transaction
 from typing import Iterable
 from django.db.models import Prefetch
 
-from django.shortcuts import get_object_or_404
-
 from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, Diagnosis
 from apps.users.models import DoctorProfile, PatientCard, PatientProfile
 from apps.users.utils import get_object
@@ -53,7 +51,7 @@ class AnalysisSelector:
 
     @transaction.atomic
     def patient_get_card(self, slug: str) -> PatientCard:
-        patient = get_object_or_404(PatientProfile, slug=slug)
+        patient = get_object(PatientProfile, slug=slug)
 
         patient_card = PatientCard.objects.get(patient=patient)
         return patient_card

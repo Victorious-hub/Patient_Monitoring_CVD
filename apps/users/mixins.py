@@ -32,12 +32,3 @@ class HandlerMixin:
         if PatientProfile.objects.filter(mobile=mobile).exists() and patient_slug != slug \
                 or not re.match(self.PATTERN, mobile):
             raise MobileException
-
-    def _validate_update_data(
-        self,
-        email: str,
-        patient_slug: PatientProfile,
-        slug: str
-    ):
-        if CustomUser.objects.filter(email=email).exists() and patient_slug != slug:
-            raise EmailException

@@ -9,18 +9,18 @@ from apps.users.models import DoctorProfile, PatientProfile
 from apps.users.utils import get_object
 
 from .tasks import (
-    blood_analysis_notificate, 
-    card_creation_notificate, 
-    cholesterol_analysis_notificate, 
-    conclusion_notificate, 
+    blood_analysis_notificate,
+    card_creation_notificate,
+    cholesterol_analysis_notificate,
+    conclusion_notificate,
     diagnosis_notificate
 )
 
 from apps.analysis.models import (
-    BloodAnalysis, 
-    CholesterolAnalysis, 
-    Conclusion, 
-    Diagnosis, 
+    BloodAnalysis,
+    CholesterolAnalysis,
+    Conclusion,
+    Diagnosis,
     PatientCard
 )
 

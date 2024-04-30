@@ -4,14 +4,14 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from .managers import CustomUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
-from apps.users.constansts import (
-    BLOOD_TYPE,
-    GENDER,
-    ROLES,
-)
+from django.utils.translation import gettext_lazy as _
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    class RoleType(models.TextChoices):
+        PATIENT = 'P', _('Patient')
+        DOCTOR = 'D', _('Doctor')
+
     email = models.EmailField(max_length=255, unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
@@ -19,7 +19,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    role = models.CharField(max_length=255, choices=ROLES, blank=True, null=True)
+    role = models.CharField(max_length=255, choices=RoleType.choices, blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -30,13 +30,17 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 
 class PatientProfile(models.Model):
+    class GenderType(models.TextChoices):
+        MALE = 'Male', _('M')
+        FEMALE = 'Female', _('F')
+
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='patient')
     weight = models.FloatField(blank=True, null=True, validators=[
         MinValueValidator(1),
         MaxValueValidator(300)
     ])
     height = models.IntegerField(blank=True, null=True)
-    gender = models.CharField(blank=True, null=True, max_length=255, choices=GENDER, default="None")
+    gender = models.CharField(blank=True, null=True, max_length=255, choices=GenderType.choices, default="None")
     age = models.IntegerField(blank=True, null=True)
     birthday = models.DateField(blank=True, null=True)
 
@@ -57,8 +61,14 @@ class PatientProfile(models.Model):
 
 
 class PatientCard(models.Model):
+    class BloodType(models.TextChoices):
+        GROUP_1 = 'Group I', _('I')
+        GROUP_2 = 'Group II', _('II')
+        GROUP_3 = 'Group III', _('III')
+        GROUP_4 = 'Group IV', _('IV')
+
     patient = models.OneToOneField(PatientProfile, on_delete=models.CASCADE, related_name='patient_card')
-    blood_type = models.CharField(max_length=255, choices=BLOOD_TYPE)
+    blood_type = models.CharField(max_length=255, choices=BloodType.choices)
     allergies = models.JSONField(default=list)
     abnormal_conditions = models.TextField()
     smoke = models.BooleanField()
@@ -78,6 +88,7 @@ class DoctorProfile(models.Model):
     patients = models.ManyToManyField(PatientProfile, related_name='patients')
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, editable=False)
     patient_cards = models.ManyToManyField(PatientCard, related_name='patient_cards')
+    profile_image = models.ImageField(upload_to='images/', null=False, blank=True)
 
     class Meta:
         verbose_name = "doctor"

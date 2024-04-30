@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 from django.db import transaction
 from apps.users.mixins import HandlerMixin
 from apps.users.models import DoctorProfile, PatientProfile, CustomUser
@@ -95,12 +96,10 @@ class PatientService(HandlerMixin):
         patient: PatientProfile = get_object(PatientProfile, slug=slug)
 
         self._validate_mobile(self.mobile, patient.slug, slug)
-        self._validate_update_data(patient.user.email, patient.slug, slug)
 
         patient.mobile = self.mobile
         patient.user.first_name = self.user['first_name']
         patient.user.last_name = self.user['last_name']
-        patient.user.email = self.user['email']
         patient.user.save()
         patient.save()
 
@@ -111,9 +110,11 @@ class DoctorService(HandlerMixin):
     def __init__(self,
                  user: CustomUser = None,
                  patients: PatientProfile = None,
+                 profile_image: uuid = None
                  ):
         self.patients = patients
         self.user = user
+        self.profile_image = profile_image
 
     @transaction.atomic
     def doctor_contact_update(
@@ -124,11 +125,10 @@ class DoctorService(HandlerMixin):
         """
 
         doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
-        self._validate_update_data(doctor.user.email, doctor.slug, slug)
 
-        doctor.user.email = self.user['email']
         doctor.user.first_name = self.user['first_name']
         doctor.user.last_name = self.user['last_name']
+        doctor.profile_image = self.profile_image
         doctor.user.save()
 
         return doctor

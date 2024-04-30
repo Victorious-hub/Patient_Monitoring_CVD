@@ -1,13 +1,15 @@
 import logging
+import base64
+import six
+import uuid
+import imghdr
 from django.views.generic import TemplateView
 from rest_framework import views
 from rest_framework import status
-
+from django.core.files.base import ContentFile
 from rest_framework.response import Response
 from rest_framework import serializers
-from apps.users.constansts import GENDER
 from apps.users.services import (
-    # DoctorService,
     DoctorService,
     PatientService,
     RegistrationService,
@@ -20,6 +22,7 @@ from apps.users.selectors import (
 from apps.users.utils import inline_serializer
 
 from .models import (
+    CustomUser,
     PatientProfile,
     DoctorProfile
 )
@@ -29,6 +32,32 @@ logger = logging.getLogger(__name__)
 
 class HelloWorldView(TemplateView):
     template_name = 'test.html'
+
+
+class Base64ImageField(serializers.ImageField):
+
+    def to_internal_value(self, data):
+        if isinstance(data, six.string_types):
+            if 'data:' in data and ';base64,' in data:
+                header, data = data.split(';base64,')
+            try:
+                decoded_file = base64.b64decode(data)
+            except TypeError:
+                self.fail('invalid_image')
+
+            file_name = str(uuid.uuid4())[:12]
+            file_extension = self.get_file_extension(file_name, decoded_file)
+
+            complete_file_name = "%s.%s" % (file_name, file_extension, )
+
+            data = ContentFile(decoded_file, name=complete_file_name)
+
+        return super(Base64ImageField, self).to_internal_value(data)
+
+    def get_file_extension(self, file_name, decoded_file):
+        extension = imghdr.what(file_name, decoded_file)
+        extension = "jpg" if extension == "jpeg" else extension
+        return extension
 
 
 class PatientCreateApi(views.APIView):
@@ -61,7 +90,7 @@ class PatientUpdateDataApi(views.APIView):
         weight = serializers.FloatField(),
         height = serializers.IntegerField(),
         age = serializers.IntegerField(),
-        gender = serializers.ChoiceField(choices=GENDER)
+        gender = serializers.ChoiceField(choices=CustomUser.RoleType.choices)
         birthday = serializers.DateField(),
 
         class Meta:
@@ -83,7 +112,6 @@ class PatientUpdateContactApi(views.APIView):
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
-            'email': serializers.EmailField(),
         })
         mobile = serializers.CharField()
 
@@ -129,7 +157,7 @@ class PatientListApi(views.APIView):
         weight = serializers.FloatField(),
         height = serializers.IntegerField(),
         age = serializers.IntegerField(),
-        gender = serializers.ChoiceField(choices=GENDER)
+        gender = serializers.ChoiceField(choices=CustomUser.RoleType.choices)
         birthday = serializers.DateField(),
         slug = serializers.CharField(),
         user = inline_serializer(fields={
@@ -156,7 +184,7 @@ class PatientDetailApi(views.APIView):
         weight = serializers.FloatField(),
         height = serializers.IntegerField(),
         age = serializers.IntegerField(),
-        gender = serializers.ChoiceField(choices=GENDER)
+        gender = serializers.ChoiceField(choices=CustomUser.RoleType.choices)
         birthday = serializers.DateField(),
         slug = serializers.CharField(),
         mobile = serializers.CharField(),
@@ -201,32 +229,16 @@ class DoctorListApi(views.APIView):
     # permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
-        patients = inline_serializer(fields={
-            'user.first_name': serializers.CharField(),
-            'user.last_name': serializers.CharField(),
-            'user.email': serializers.EmailField(),
-            'height': serializers.IntegerField(),
-            'weight': serializers.FloatField(),
-            'gender': serializers.ChoiceField(choices=GENDER),
-            'age': serializers.IntegerField(),
-            'birthday': serializers.DateField(),
-        }, many=True)
-        patient_cards = inline_serializer(fields={
-            'blood_type': serializers.BooleanField(),
-            'allergies': serializers.JSONField(),
-            'abnormal_conditions': serializers.CharField(),
-            'smoke': serializers.BooleanField(),
-            'alcohol': serializers.BooleanField(),
-        }, many=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
             'email': serializers.EmailField(),
         })
+        profile_image = Base64ImageField(max_length=None, use_url=True)
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'patients', 'patient_cards',)
+            fields = ('user', 'profile_image',)
 
     def get(self, request):
         doctors = DoctorSelector()
@@ -244,7 +256,7 @@ class DoctorDetailApi(views.APIView):
             'user.email': serializers.EmailField(),
             'height': serializers.IntegerField(),
             'weight': serializers.FloatField(),
-            'gender': serializers.ChoiceField(choices=GENDER),
+            'gender': serializers.ChoiceField(choices=CustomUser.RoleType.choices),
             'age': serializers.IntegerField(),
             'birthday': serializers.DateField(),
         }, many=True)
@@ -255,6 +267,7 @@ class DoctorDetailApi(views.APIView):
             'smoke': serializers.BooleanField(),
             'alcohol': serializers.BooleanField(),
         }, many=True)
+        profile_image = Base64ImageField(max_length=None, use_url=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
@@ -263,7 +276,7 @@ class DoctorDetailApi(views.APIView):
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'patients', 'patient_cards',)
+            fields = ('user', 'patients', 'patient_cards', 'profile_image',)
 
     def get(self, request, slug):
         doctors = DoctorSelector()
@@ -278,12 +291,12 @@ class DoctorUpdateApi(views.APIView):
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
-            'email': serializers.EmailField(),
+            'profile_image': Base64ImageField(max_length=None, use_url=True)
         })
 
         class Meta:
             model = DoctorProfile
-            fields = ('user',)
+            fields = ('user', 'profile_image',)
 
     def put(self, request, slug):
         serializer = self.InputSerializer(data=request.data, partial=True)
@@ -337,7 +350,7 @@ class DoctorPatientListApi(views.APIView):
             'user.email': serializers.EmailField(),
             'height': serializers.IntegerField(),
             'weight': serializers.FloatField(),
-            'gender': serializers.ChoiceField(choices=GENDER),
+            'gender': serializers.ChoiceField(choices=CustomUser.RoleType.choices),
             'age': serializers.IntegerField(),
             'birthday': serializers.DateField(),
         }, many=True)

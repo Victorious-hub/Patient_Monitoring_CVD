@@ -3,7 +3,6 @@ from rest_framework import serializers
 from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, Conclusion, Diagnosis, PatientCard
 from apps.analysis.selectors import AnalysisSelector
 from apps.analysis.services import AnalysisService
-from apps.users.constansts import BLOOD_TYPE
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -121,7 +120,7 @@ class CardCreateApi(views.APIView):
         patient = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=False)
         smoke = serializers.BooleanField()
         alcohol = serializers.BooleanField()
-        blood_type = serializers.ChoiceField(choices=BLOOD_TYPE)
+        blood_type = serializers.ChoiceField(choices=PatientCard.BloodType.choices)
         abnormal_conditions = serializers.CharField()
         allergies = serializers.JSONField()
         active = serializers.BooleanField()
@@ -155,7 +154,7 @@ class CardListApi(views.APIView):
         smoke = serializers.FloatField()
         active = serializers.FloatField()
         alcohol = serializers.FloatField()
-        blood_type = serializers.ChoiceField(choices=BLOOD_TYPE)
+        blood_type = serializers.ChoiceField(choices=PatientCard.BloodType.choices)
         allergies = serializers.JSONField()
         abnormal_conditions = serializers.CharField()
 
@@ -186,7 +185,7 @@ class CardDetailApi(views.APIView):
         smoke = serializers.FloatField()
         active = serializers.FloatField()
         alcohol = serializers.FloatField()
-        blood_type = serializers.ChoiceField(choices=BLOOD_TYPE)
+        blood_type = serializers.ChoiceField(choices=PatientCard.BloodType.choices)
         abnormal_conditions = serializers.CharField()
 
         class Meta:

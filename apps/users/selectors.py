@@ -24,7 +24,7 @@ class PatientSelector:
 
 class DoctorSelector:
     @transaction.atomic
-    def doctor_list(self) -> Iterable[DoctorProfile]:
+    def doctor_list(self, slug: str) -> Iterable[DoctorProfile]:
         doctors = DoctorProfile.objects.all()
         return doctors
 

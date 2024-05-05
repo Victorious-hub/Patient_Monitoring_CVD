@@ -20,16 +20,22 @@ class PatientSelector:
     def patient_get(self, slug: str) -> PatientProfile:
         patient = get_object_or_404(PatientProfile, slug=slug)
         return patient
+    
+    @transaction.atomic
+    def patient_doctor_list(self, slug: str) -> PatientProfile:
+        patient = get_object_or_404(PatientProfile, slug=slug)
+        doctors = DoctorProfile.objects.filter(patients=patient).all()
+        return doctors
 
 
 class DoctorSelector:
     @transaction.atomic
-    def doctor_list(self, slug: str) -> Iterable[DoctorProfile]:
+    def doctor_list(self) -> Iterable[DoctorProfile]:
         doctors = DoctorProfile.objects.all()
         return doctors
 
     @transaction.atomic
-    def doctor_get(self, slug: str) -> PatientProfile:
+    def doctor_get(self, slug: str) -> DoctorProfile:
         doctor = DoctorProfile.objects.select_related('user').prefetch_related(
             Prefetch('patient_cards', queryset=PatientCard.objects.all()),
             Prefetch('patients', queryset=PatientProfile.objects.all())

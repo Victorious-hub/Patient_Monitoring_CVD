@@ -33,6 +33,7 @@ class PatientProfile(models.Model):
     class GenderType(models.TextChoices):
         MALE = 'Male', _('M')
         FEMALE = 'Female', _('F')
+        NONE = 'None', _('N')
 
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='patient')
     weight = models.FloatField(blank=True, null=True, validators=[

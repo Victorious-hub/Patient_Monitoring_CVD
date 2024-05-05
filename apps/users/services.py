@@ -128,7 +128,7 @@ class DoctorService(HandlerMixin):
 
         doctor.user.first_name = self.user['first_name']
         doctor.user.last_name = self.user['last_name']
-        doctor.profile_image = self.profile_image
+
         doctor.user.save()
 
         return doctor
@@ -144,10 +144,11 @@ class DoctorService(HandlerMixin):
 
         doctor.patients.add(*self.patients)  # unpacking
         doctor.save()
-
-        transaction.on_commit(
-            lambda: add_patient.delay(slug)
-        )
+        for i in self.patients:
+            print(i.slug)
+            transaction.on_commit(
+                lambda: add_patient.delay(slug, i.slug)
+            )
 
         return doctor
 

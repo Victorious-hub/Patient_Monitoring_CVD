@@ -129,28 +129,6 @@ class PatientUpdateContactApi(views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# class PatientUpdatePasswordApi(views.APIView):
-#     #permission_classes = (IsPatient,)
-
-#     class InputSerializer(serializers.Serializer):
-#         password_confirm = serializers.CharField(),
-#         new_password = serializers.CharField(),
-#         user = inline_serializer(fields={
-#             'password': serializers.CharField(),
-#         })
-
-#         class Meta:
-#             model = PatientProfile
-#             fields = ('user', 'new_password', 'password_confirm',)
-
-#     def put(self, request, slug):
-#         serializer = self.InputSerializer(data=request.data, partial=True)
-#         serializer.is_valid(raise_exception=True)
-#         patient = PatientService(**serializer.validated_data)
-#         patient.password_update(slug)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 class PatientListApi(views.APIView):
     # permission_classes = (IsPatient,)
 
@@ -241,9 +219,31 @@ class DoctorListApi(views.APIView):
             model = DoctorProfile
             fields = ('user', 'profile_image',)
 
-    def get(self, request, slug):
+    def get(self, request):
         doctors = DoctorSelector()
-        data = self.OutputSerializer(doctors.doctor_list(slug), many=True).data
+        data = self.OutputSerializer(doctors.doctor_list(), many=True).data
+        return Response(data, status=status.HTTP_200_OK)
+
+
+
+class PatientDoctorListApi(views.APIView):
+    # permission_classes = (IsDoctor,)
+
+    class OutputSerializer(serializers.ModelSerializer):
+        user = inline_serializer(fields={
+            'first_name': serializers.CharField(),
+            'last_name': serializers.CharField(),
+            'email': serializers.EmailField(),
+        })
+        profile_image = Base64ImageField(max_length=None, use_url=True)
+
+        class Meta:
+            model = DoctorProfile
+            fields = ('user', 'profile_image',)
+
+    def get(self, request, slug):
+        patients = PatientSelector()
+        data = self.OutputSerializer(patients.patient_doctor_list(slug), many=True).data
         return Response(data, status=status.HTTP_200_OK)
 
 
@@ -292,12 +292,11 @@ class DoctorUpdateApi(views.APIView):
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
-            'profile_image': Base64ImageField(max_length=None, use_url=True)
         })
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'profile_image',)
+            fields = ('user',)
 
     def put(self, request, slug):
         serializer = self.InputSerializer(data=request.data, partial=True)

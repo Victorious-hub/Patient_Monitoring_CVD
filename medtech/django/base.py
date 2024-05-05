@@ -104,7 +104,7 @@ DATABASES = {
         'USER': 'user-name',
         'HOST': 'db',
         'PORT': 5432,
-        'PASSWORD': 'strong-password'
+        'PASSWORD': 'strong-password',
     }
 }
 

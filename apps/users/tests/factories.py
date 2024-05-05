@@ -6,34 +6,29 @@ from faker import Factory as FakerFactory
 faker = FakerFactory.create()
 
 
-class CustomUserFactory(factory.django.DjangoModelFactory):
+class CustomUserPatientFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CustomUser
 
-    email = 'test@gmail.com'
-    is_staff = 'True'
+    email = 'test_patient@gmail.com'
     first_name = factory.LazyFunction(lambda: faker.name())
-    last_name = 'last_name'
+    last_name = factory.LazyFunction(lambda: faker.name())
     password = '12345678'
-    mobile = '+1122334455'
     role = 'P'
-    gender = 'Male'
     is_active = True
     is_staff = False
 
 
-class CustomUserFactory1(factory.django.DjangoModelFactory):
+
+class CustomUserDoctorFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CustomUser
 
-    email = 'test1@gmail.com'
-    is_staff = 'True'
+    email = 'test_doctor@gmail.com'
     first_name = factory.LazyFunction(lambda: faker.name())
-    last_name = 'last_name'
+    last_name = factory.LazyFunction(lambda: faker.name())
     password = '12345678'
-    mobile = '+1234567890'
     role = 'D'
-    gender = 'Male'
     is_active = True
     is_staff = False
 
@@ -42,9 +37,27 @@ class PatientFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = PatientProfile
 
-    user = factory.SubFactory(CustomUserFactory)
+    user = factory.SubFactory(CustomUserPatientFactory)
     slug = factory.LazyAttribute(lambda obj: obj.user.email.split('@')[0])
-    address = factory.LazyFunction(lambda: faker.sentence(nb_words=10))
+    weight = 25.0
+    mobile = '+1122334455'
+    height = 180
+    age = 20
+    gender = 'Male'
+    birthday = '2020-10-10'
+
+
+class CardFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = PatientCard
+
+    patient = factory.SubFactory(PatientFactory)
+    smoke = False
+    alcohol = False
+    active = True
+    blood_type = factory.Faker('random_element', elements=['I', 'II', 'III', 'IV'])
+    allergies = {'Pollen':'pollen', 'Milk':'milk'}
+    abnormal_conditions = factory.LazyFunction(lambda: faker.name())
 
 
 class DoctorFactory(factory.django.DjangoModelFactory):
@@ -52,24 +65,18 @@ class DoctorFactory(factory.django.DjangoModelFactory):
         model = DoctorProfile
         skip_postgeneration_save = True
 
-    user = factory.SubFactory(CustomUserFactory1)
+    user = factory.SubFactory(CustomUserDoctorFactory)
     slug = factory.LazyAttribute(lambda obj: obj.user.email.split('@')[0])
-    spec = 'D'
-    patients = factory.RelatedFactory(PatientFactory)
+    # patients = factory.RelatedFactory(CustomUserPatientFactory) # ManyToMany
+    # patient_cards = factory.RelatedFactory(CardFactory)
 
 
-class CardFactory(factory.django.DjangoModelFactory):
+class DoctorFactory1(factory.django.DjangoModelFactory):
     class Meta:
-        model = PatientCard
+        model = DoctorProfile
+        skip_postgeneration_save = True
 
-    doctor_owners = factory.SubFactory(DoctorFactory)
-    patient = factory.SubFactory(PatientFactory)
-    height = 180
-    weight = 87.5
-    age = factory.Faker('random_int', min=1, max=100)
-    is_smoking = 'No'
-    is_alcohol = 'No'
-    card_id = factory.LazyFunction(uuid.uuid4)
-    blood_type = factory.Faker('random_element', elements=['A', 'B', 'AB', 'O'])
-    allergies = 'Pollen'
-    ex_conditions = 'sentence'
+    user = factory.SubFactory(CustomUserDoctorFactory)
+    slug = factory.LazyAttribute(lambda obj: obj.user.email.split('@')[0])
+    patients = factory.RelatedFactory(PatientFactory) # ManyToMany
+    patient_cards = factory.RelatedFactory(CardFactory)

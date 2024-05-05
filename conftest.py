@@ -7,24 +7,31 @@ from faker import Factory as FakerFactory
 from collections import OrderedDict
 from apps.users.tests.factories import (
     CardFactory,
-    CustomUserFactory,
-    CustomUserFactory1,
+    CustomUserPatientFactory,
+    CustomUserDoctorFactory,
     DoctorFactory,
-    PatientFactory
+    PatientFactory,
+    DoctorFactory1
 )
-from apps.investigations.tests.factories import (
-    BloodInvestigationFactory,
-    CholesterolInvestigationFactory,
-    CustomTestFactory,
-    CustomTestFactory1,
-    PatientFactoryBlood,
-    PatientFactoryCholesterol
-)
+import medtech
+
 faker = FakerFactory.create()
+
+@pytest.fixture(scope='session')
+def django_db_setup():
+    medtech.django.base.DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'postgres',
+        'USER': 'user-name',
+        'HOST': 'db',
+        'PORT': 5432,
+        'PASSWORD': 'strong-password',
+}
+ 
 
 
 @pytest.fixture
-def patient_service_invalid_password():
+def user_service_invalid_password():
     user = OrderedDict(
         [
             ('email', "test1234@gmail.com"),
@@ -32,9 +39,6 @@ def patient_service_invalid_password():
             ('last_name', "last_name"),
             ('is_staff', False),
             ('is_active', True),
-            ('mobile', "+9034507810"),
-            ('gender', "Male"),
-            ('role', "P"),
             ('password', "1234567"),
         ]
     )
@@ -42,72 +46,18 @@ def patient_service_invalid_password():
 
 
 @pytest.fixture
-def patient_service_email_exists():
-    user = OrderedDict(
-        [
-            ('email', "test1234@gmail.com"),
-            ('first_name', factory.LazyFunction(lambda: faker.name())),
-            ('last_name', "last_name"),
-            ('is_staff', False),
-            ('is_active', True),
-            ('mobile', "+9034507810"),
-            ('gender', "Male"),
-            ('role', "P"),
-            ('password', "12345678"),
-        ]
-    )
-    return user
+def user_service_email_exists(user_service_invalid_password):
+    user_service_invalid_password['password'] = "12345678"
+    return user_service_invalid_password
 
 
-@pytest.fixture
-def patient_service_mobile_exists():
-    user = OrderedDict(
-        [
-            ('email', "mail@gmail.com"),
-            ('first_name', factory.LazyFunction(lambda: faker.name())),
-            ('last_name', "last_name"),
-            ('is_staff', False),
-            ('is_active', True),
-            ('mobile', "+903450781"),
-            ('gender', "Male"),
-            ('role', "P"),
-            ('password', "12345678"),
-        ]
-    )
-    return user
-
-
-@pytest.fixture
-def patient_service_update():
-    email = "some_mail@gmail.com"
-    user = OrderedDict(
-        [
-            ('email', email),
-            ('first_name', factory.LazyFunction(lambda: faker.name())),
-            ('last_name', "last_name"),
-            ('is_staff', False),
-            ('is_active', True),
-            ('mobile', "+1234567890"),
-            ('gender', "Male"),
-            ('role', "P"),
-            ('password', "12345678"),
-            ('slug', email.split('@')[0]),
-        ]
-    )
-    return user
-
-
-register(CustomUserFactory)
+register(CustomUserPatientFactory)
 register(PatientFactory)
 register(DoctorFactory)
-register(CustomUserFactory1)
+register(CustomUserDoctorFactory)
 register(CardFactory)
+register(DoctorFactory1)
 
 # some in built factory. Don't need to create in database
 register(CardFactory, "patient_card")
-register(CustomTestFactory)
-register(CustomTestFactory1)
-register(BloodInvestigationFactory)
-register(CholesterolInvestigationFactory)
-register(PatientFactoryBlood)
-register(PatientFactoryCholesterol)
+

@@ -11,6 +11,7 @@ from .apis import (
     HelloWorldView,
     PatientCreateApi,
     PatientDetailApi,
+    PatientDoctorListApi,
     PatientListApi,
     PatientUpdateContactApi,
     PatientUpdateDataApi,
@@ -30,10 +31,11 @@ urlpatterns = [
     # path('v1/patients/<str:slug>/update', PatientUpdatelApi.as_view(), name='update_patient'),
 
     path('v1/registration/doctor', DoctorCreateApi.as_view(), name='create_doctor'),
-    path('v1/doctors/<str:slug>', DoctorListApi.as_view(), name='list_doctor'),
+    path('v1/doctors', DoctorListApi.as_view(), name='list_doctor'),
     path('v1/doctors/<str:slug>/get', DoctorDetailApi.as_view(), name='get_doctor'),
     path('v1/doctors/<str:slug>/contact', DoctorUpdateApi.as_view(), name='contact_doctor_update'),
     path('v1/doctors/patient/<str:slug>/update', DoctorPatientAddApi.as_view(), name='add_doctor_patient_list'),
     path('v1/doctors/patient/<str:slug>/delete', DoctorPatientDeleteApi.as_view(), name='delete_patient'),
-    path('v1/doctors/patient/<str:slug>/get', DoctorPatientListApi.as_view(), name='doctor_patients')
+    path('v1/doctors/patient/<str:slug>/get', DoctorPatientListApi.as_view(), name='doctor_patients'),
+    path('v1/patients/doctors/<str:slug>', PatientDoctorListApi.as_view(), name='patient_doctor_list')
 ]

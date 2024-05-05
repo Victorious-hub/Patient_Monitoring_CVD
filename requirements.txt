@@ -169,7 +169,7 @@ PyJWT==2.8.0
 pyOpenSSL==24.1.0
 pyparsing==3.1.2
 pytest==8.0.0
-pytest-django==4.8.0
+pytest-django==4.3.0
 pytest-factoryboy==2.6.0
 pytest-xdist==3.5.0
 python-dateutil==2.8.2

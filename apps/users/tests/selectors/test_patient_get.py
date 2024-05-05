@@ -1,20 +1,23 @@
 from django.http import Http404
 import pytest
-from apps.users.selectors import patient_get, patient_list
-
+from apps.users.models import PatientProfile
+from apps.users.selectors import DoctorSelector, PatientSelector
 
 @pytest.mark.django_db
 def test_patient_list(patient_factory):
     patient_factory.create()
-    patient = patient_list()
-    assert len(patient) > 0
+    patient = PatientSelector()
+    data = patient.patient_list()
+    assert len(data) > 0
 
 
 @pytest.mark.django_db
 def test_patient_retrieve(patient_factory):
-    user = patient_factory.create()
-    patient = patient_get(slug=user.slug)
-    assert patient
+    user: PatientProfile = patient_factory.create()
+    patient = PatientSelector()
+    data = patient.patient_get(slug=user.slug)
+    assert data
 
     with pytest.raises(Http404):
-        patient_get(slug="unexisted patient instance")
+        patient.patient_get(slug="unexisted patient instance")
+    

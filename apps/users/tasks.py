@@ -27,8 +27,8 @@ def add_patient(slug: str, patient_slug: str):
 
 
 @shared_task()
-def send_appointment(slug: str) -> Notification:
-    patient = DoctorProfile.objects.get(slug=slug).patients.order_by('id').last()
+def send_appointment(slug: str, patient_slug: str) -> Notification:
+    patient = get_object(PatientProfile, slug=patient_slug)
     doctor = get_object(DoctorProfile, slug=slug)
 
     notification = Notification.objects.create(

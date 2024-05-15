@@ -1,7 +1,8 @@
 from django.http import Http404
 import pytest
 from apps.users.models import PatientProfile
-from apps.users.selectors import DoctorSelector, PatientSelector
+from apps.users.selectors import PatientSelector
+
 
 @pytest.mark.django_db
 def test_patient_list(patient_factory):
@@ -20,4 +21,3 @@ def test_patient_retrieve(patient_factory):
 
     with pytest.raises(Http404):
         patient.patient_get(slug="unexisted patient instance")
-    

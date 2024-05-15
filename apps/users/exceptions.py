@@ -41,3 +41,9 @@ class PasswordOrEmailException(APIException):
     status_code = 400
     default_detail = 'Password or Email are incorrect'
     default_code = 'service_unavailable'
+
+
+class CardNotExistsException(APIException):
+    status_code = 200
+    default_detail = 'Your card is not ready yet'
+    default_code = 'service_available'

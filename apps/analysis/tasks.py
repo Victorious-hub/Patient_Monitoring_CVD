@@ -46,7 +46,6 @@ def cholesterol_analysis_notificate(slug: str, patient_slug: str):
 
 @shared_task()
 def card_creation_notificate(slug: str, patient_slug: str):
-    print("qrqwrqrqwrq")
     patient = get_object(PatientProfile, slug=patient_slug)
     doctor = get_object(DoctorProfile, slug=slug)
 
@@ -56,6 +55,8 @@ def card_creation_notificate(slug: str, patient_slug: str):
         message=f"Your card has been created: {doctor}",
         is_read=False,
     )
+    patient.has_card = True
+    patient.save()
 
     serialized_notification = serialize('json', [notification])
     notification_data = json.loads(serialized_notification)[0]['fields']

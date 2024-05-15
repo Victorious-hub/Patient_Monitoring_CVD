@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PatientProfile, DoctorProfile, PatientCard, CustomUser
+from .models import PatientProfile, DoctorProfile, PatientCard, CustomUser, Schedule
 
 
 @admin.register(CustomUser)
@@ -34,3 +34,4 @@ class DoctorAdmin(admin.ModelAdmin):
 admin.site.register(PatientCard)
 admin.site.register(PatientProfile)
 admin.site.register(DoctorProfile)
+admin.site.register(Schedule)

@@ -1,4 +1,3 @@
-from django.http import Http404
 import pytest
 from apps.users.models import DoctorProfile, PatientProfile
 from apps.users.selectors import DoctorSelector

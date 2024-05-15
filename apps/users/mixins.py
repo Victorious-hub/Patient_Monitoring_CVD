@@ -1,7 +1,16 @@
 
 import re
-from apps.users.exceptions import EmailException, MobileException, PasswordLengthException
-from apps.users.models import CustomUser, DoctorProfile, PatientProfile
+from apps.users.exceptions import (
+    EmailException,
+    MobileException,
+    PasswordLengthException
+)
+
+from apps.users.models import (
+    CustomUser,
+    DoctorProfile,
+    PatientProfile
+)
 
 
 class HandlerMixin:

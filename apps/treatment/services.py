@@ -6,6 +6,7 @@ from apps.treatment.models import Appointment, Medication, Prescription
 from apps.users.exceptions import DoctorNotFound
 from apps.users.models import DoctorProfile, PatientCard
 from apps.users.tasks import send_appointment
+from apps.users.utils import get_object
 
 
 class MedicationService:
@@ -39,7 +40,7 @@ class MedicationService:
 
 class TreatmentService:
     def __init__(self,
-                 patient_card: PatientCard = None,
+                 patient_slug: str = None,
                  medication: Medication = None,
                  dosage: str = None,
                  start_date: datetime = None,
@@ -48,7 +49,7 @@ class TreatmentService:
                  appointment_time: time = None,
                  text: str = None,
                  ):
-        self.patient_card = patient_card
+        self.patient_slug = patient_slug
         self.medication = medication
         self.dosage = dosage
         self.start_date = start_date
@@ -68,8 +69,10 @@ class TreatmentService:
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 
+        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
+
         obj = Prescription.objects.create(
-            patient_card=self.patient_card,
+            patient_card=patient_card,
             medication=self.medication,
             dosage=self.dosage,
             start_date=self.start_date,
@@ -91,14 +94,16 @@ class TreatmentService:
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 
+        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
+
         obj = Appointment.objects.create(
-            patient_card=self.patient_card,
+            patient_card=patient_card,
             appointment_date=self.appointment_date,
             appointment_time=self.appointment_time
         )
 
         transaction.on_commit(
-            lambda: send_appointment.delay(slug)
+            lambda: send_appointment.delay(slug, self.patient_slug)
         )
 
         obj.full_clean()

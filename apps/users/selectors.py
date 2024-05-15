@@ -6,8 +6,10 @@ from django.shortcuts import get_object_or_404
 from apps.users.models import (
     DoctorProfile,
     PatientCard,
-    PatientProfile
+    PatientProfile,
+    Schedule
 )
+from apps.users.utils import get_object
 
 
 class PatientSelector:
@@ -20,7 +22,7 @@ class PatientSelector:
     def patient_get(self, slug: str) -> PatientProfile:
         patient = get_object_or_404(PatientProfile, slug=slug)
         return patient
-    
+
     @transaction.atomic
     def patient_doctor_list(self, slug: str) -> PatientProfile:
         patient = get_object_or_404(PatientProfile, slug=slug)
@@ -51,3 +53,14 @@ class DoctorSelector:
         )
         doctor = doctor.get(slug=slug)
         return doctor
+
+    @transaction.atomic
+    def schedule_list(self) -> Iterable[Schedule]:
+        schedule = Schedule.objects.all()
+        return schedule
+
+    @transaction.atomic
+    def schedule_detail(self, slug) -> Iterable[Schedule]:
+        doctor = get_object(DoctorProfile, slug=slug)
+        doctor_schedule = get_object(Schedule, doctor=doctor)
+        return doctor_schedule

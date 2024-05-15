@@ -4,12 +4,12 @@ from .models import Appointment, Medication, Prescription
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'patient_card', 'appointment_date', 'appointment_time',
+    list_display = ('id', 'patient', 'appointment_date', 'appointment_time',
                     'created_at',
                     )
     search_fields = ('appointment_date',)
-    list_display_links = ('patient_card',)
-    list_filter = ('patient_card',)
+    list_display_links = ('patient',)
+    list_filter = ('patient',)
     empty_value_display = "undefined"
 
 

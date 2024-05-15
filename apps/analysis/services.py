@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import pickle
 from django.db import transaction
@@ -27,11 +28,15 @@ from apps.analysis.models import (
 
 class AnalysisService(ValidationMixin):
     def __init__(self,
+                 weight: float = None,
+                 height: int = None,
+                 birthday: datetime = None,
+                 gender: str = None,
                  patient: PatientProfile = None,
                  blood_analysis: BloodAnalysis = None,
                  cholesterol_analysis: CholesterolAnalysis = None,
                  anomaly: bool = False,
-                 patient_card: PatientCard = None,
+                 patient_slug: str = None,
                  glucose: float = None,
                  ap_hi: float = None,
                  ap_lo: float = None,
@@ -48,12 +53,16 @@ class AnalysisService(ValidationMixin):
                  description: str = None,
                  recommendations: str = None,
                  ):
+        self.weight = weight
+        self.height = height
+        self.gender = gender
+        self.birthday = birthday
         self.recommendations = recommendations
         self.description = description
         self.patient = patient
-        self.cholesterol_analysis = cholesterol_analysis,
-        self.blood_analysis = blood_analysis,
-        self.patient_card = patient_card
+        self.cholesterol_analysis = cholesterol_analysis
+        self.blood_analysis = blood_analysis
+        self.patient_slug = patient_slug
         self.glucose = glucose
         self.ap_hi = ap_hi
         self.ap_lo = ap_lo
@@ -86,7 +95,7 @@ class AnalysisService(ValidationMixin):
         """
 
         self._check_doctor_exists(slug)
-        patient_card = get_object(PatientCard, patient=self.patient_card.patient)
+        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
 
         obj = BloodAnalysis.objects.create(
             patient=patient_card,
@@ -98,7 +107,7 @@ class AnalysisService(ValidationMixin):
         obj.save()
 
         transaction.on_commit(
-            lambda: blood_analysis_notificate.delay(slug, self.patient_card.patient.slug)
+            lambda: blood_analysis_notificate.delay(slug, self.patient_slug)
         )
 
         return obj
@@ -112,7 +121,7 @@ class AnalysisService(ValidationMixin):
 
         self._check_doctor_exists(slug)
 
-        patient_card = get_object(PatientCard, patient=self.patient_card.patient)
+        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
 
         obj = CholesterolAnalysis.objects.create(
             patient=patient_card,
@@ -125,7 +134,7 @@ class AnalysisService(ValidationMixin):
         obj.save()
 
         transaction.on_commit(
-            lambda: cholesterol_analysis_notificate.delay(slug, self.patient_card.patient.slug)
+            lambda: cholesterol_analysis_notificate.delay(slug, self.patient_slug)
         )
 
         return obj
@@ -141,15 +150,20 @@ class AnalysisService(ValidationMixin):
         self._card_exists(self.patient)
 
         doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
+        patient = get_object(PatientProfile, slug=self.patient_slug)
 
         patient_card = PatientCard.objects.create(
             abnormal_conditions=self.abnormal_conditions,
-            patient=self.patient,
+            patient=patient,
             allergies=self.allergies,
             smoke=self.smoke,
             alcohol=self.alcohol,
             blood_type=self.blood_type,
-            active=self.active
+            active=self.active,
+            weight=self.weight,
+            height=self.height,
+            gender=self.gender,
+            birthday=self.birthday
         )
 
         patient_card.full_clean()
@@ -157,7 +171,7 @@ class AnalysisService(ValidationMixin):
         doctor.patient_cards.add(patient_card)
 
         transaction.on_commit(
-            lambda: card_creation_notificate.delay(slug, self.patient.slug)
+            lambda: card_creation_notificate.delay(slug, self.patient_slug)
         )
 
         return patient_card
@@ -172,11 +186,11 @@ class AnalysisService(ValidationMixin):
 
         self._check_doctor_exists(slug)
 
-        patient_card: PatientCard = get_object(PatientCard, patient=self.patient_card.patient)
+        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
         blood_obj = BloodAnalysis.objects.filter(patient=patient_card).last()
         cholesterol_obj = CholesterolAnalysis.objects.filter(patient=patient_card).last()
 
-        patient_card.patient.gender = 1 if patient_card.patient.gender == "Male" else 0
+        patient_card.gender = 1 if patient_card.gender == "Male" else 0
         preditction = self._predict_anomaly([
             blood_obj.ap_hi,
             blood_obj.ap_lo,
@@ -185,10 +199,10 @@ class AnalysisService(ValidationMixin):
             patient_card.active,
             patient_card.alcohol,
             patient_card.smoke,
-            patient_card.patient.age,
-            patient_card.patient.gender,
-            patient_card.patient.height,
-            patient_card.patient.weight,
+            patient_card.age,
+            patient_card.gender,
+            patient_card.height,
+            patient_card.weight,
         ])
 
         print(f"Anomaly: {preditction}")
@@ -203,7 +217,7 @@ class AnalysisService(ValidationMixin):
         obj.save()
 
         transaction.on_commit(
-            lambda: diagnosis_notificate.delay(slug, self.patient_card.patient.slug)
+            lambda: diagnosis_notificate.delay(slug, self.patient_slug)
         )
 
         return obj
@@ -214,8 +228,8 @@ class AnalysisService(ValidationMixin):
         """
         self._check_doctor_exists(slug)
 
-        patient_card = get_object(PatientCard, patient=self.patient_card.patient)
-        analysis = get_object(Diagnosis, patient_card=patient_card)
+        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
+        analysis = Diagnosis.objects.filter(patient_card=patient_card).last()
 
         obj = Conclusion.objects.create(
             analysis_result=analysis,
@@ -227,7 +241,7 @@ class AnalysisService(ValidationMixin):
         obj.save()
 
         transaction.on_commit(
-            lambda: conclusion_notificate.delay(slug, self.patient_card.patient.slug)
+            lambda: conclusion_notificate.delay(slug, self.patient_slug)
         )
 
         return obj

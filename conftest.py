@@ -17,6 +17,7 @@ import medtech
 
 faker = FakerFactory.create()
 
+
 @pytest.fixture(scope='session')
 def django_db_setup():
     medtech.django.base.DATABASES['default'] = {
@@ -26,8 +27,7 @@ def django_db_setup():
         'HOST': 'db',
         'PORT': 5432,
         'PASSWORD': 'strong-password',
-}
- 
+    }
 
 
 @pytest.fixture
@@ -60,4 +60,3 @@ register(DoctorFactory1)
 
 # some in built factory. Don't need to create in database
 register(CardFactory, "patient_card")
-

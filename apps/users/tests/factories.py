@@ -1,5 +1,4 @@
 import factory
-import uuid
 from apps.users.models import CustomUser, DoctorProfile, PatientCard, PatientProfile
 from faker import Factory as FakerFactory
 
@@ -17,7 +16,6 @@ class CustomUserPatientFactory(factory.django.DjangoModelFactory):
     role = 'P'
     is_active = True
     is_staff = False
-
 
 
 class CustomUserDoctorFactory(factory.django.DjangoModelFactory):
@@ -56,7 +54,7 @@ class CardFactory(factory.django.DjangoModelFactory):
     alcohol = False
     active = True
     blood_type = factory.Faker('random_element', elements=['I', 'II', 'III', 'IV'])
-    allergies = {'Pollen':'pollen', 'Milk':'milk'}
+    allergies = {'Pollen': 'pollen', 'Milk': 'milk'}
     abnormal_conditions = factory.LazyFunction(lambda: faker.name())
 
 
@@ -78,5 +76,5 @@ class DoctorFactory1(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(CustomUserDoctorFactory)
     slug = factory.LazyAttribute(lambda obj: obj.user.email.split('@')[0])
-    patients = factory.RelatedFactory(PatientFactory) # ManyToMany
+    patients = factory.RelatedFactory(PatientFactory)  # ManyToMany
     patient_cards = factory.RelatedFactory(CardFactory)

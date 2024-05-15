@@ -3,12 +3,10 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework import serializers
 
-from apps.treatment.selectors import PrescriptionSelector
+from apps.treatment.selectors import MedicationSelector, PrescriptionSelector
 from apps.users.utils import inline_serializer
-from permissions.doctor_permission import IsDoctor
 from apps.treatment.models import Appointment, Medication, Prescription
 from apps.treatment.services import MedicationService, TreatmentService
-from apps.users.models import PatientCard
 
 
 class MedicationCreateApi(views.APIView):
@@ -32,7 +30,7 @@ class MedicationCreateApi(views.APIView):
 
 class PrescriptionCreateApi(views.APIView):
     class InputSerializer(serializers.Serializer):
-        patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all())
+        patient_slug = serializers.CharField()
         medication = serializers.PrimaryKeyRelatedField(queryset=Medication.objects.all())
         dosage = serializers.CharField()
         start_date = serializers.DateField()
@@ -40,7 +38,7 @@ class PrescriptionCreateApi(views.APIView):
 
         class Meta:
             model = Prescription
-            fields = '__all__'
+            fields = ('dosage', 'end_date', 'medication', 'patient_slug', 'start_date')
 
     def post(self, request, slug):
         serializer = self.InputSerializer(data=request.data)
@@ -73,20 +71,40 @@ class PrescriptionPatientListApi(views.APIView):
 
 
 class AppointmentCreateApi(views.APIView):
-    permission_classes = (IsDoctor,)
+    # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.Serializer):
-        patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all())
+        patient_slug = serializers.CharField()
         appointment_date = serializers.DateField()
         appointment_time = serializers.TimeField()
 
         class Meta:
             model = Appointment
-            fields = '__all__'
+            fields = ('appointment_date', 'appointment_time', 'patient_slug',)
 
     def post(self, request, slug):
+        print(request.data)
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         appointment = TreatmentService(**serializer.validated_data)
         appointment.create_appointment(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class MedicationListApi(views.APIView):
+
+    class OutputSerializer(serializers.Serializer):
+        id = serializers.IntegerField()
+        name = serializers.CharField()
+        dosage = serializers.FloatField()
+        description = serializers.CharField()
+        created_at = serializers.DateField()
+
+        class Meta:
+            model = Medication
+            fields = ('id', 'name', 'dosage', 'description', 'created_at', )
+
+    def get(self, request):
+        medications = MedicationSelector()
+        data = self.OutputSerializer(medications.medication_list(), many=True).data
+        return Response(data, status=status.HTTP_200_OK)

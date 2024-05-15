@@ -2,6 +2,7 @@ import pytest
 
 from apps.users.models import DoctorProfile
 
+
 @pytest.mark.django_db
 def test_doctor_instance(doctor_factory):
     doctor = doctor_factory.build()

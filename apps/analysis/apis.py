@@ -6,7 +6,6 @@ from apps.analysis.services import AnalysisService
 from rest_framework.response import Response
 from rest_framework import status
 
-from apps.users.models import PatientProfile
 from apps.users.utils import inline_serializer
 
 
@@ -14,16 +13,17 @@ class PatientBloodCreateApi(views.APIView):
     # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all(), many=False)
-        glucose = serializers.FloatField()
         ap_hi = serializers.IntegerField()
         ap_lo = serializers.IntegerField()
+        glucose = serializers.FloatField()
+        patient_slug = serializers.CharField()
 
         class Meta:
             model = BloodAnalysis
-            fields = ('patient_card', 'glucose', 'ap_hi', 'ap_lo',)
+            fields = ('ap_hi', 'ap_lo', 'glucose', 'patient_slug',)
 
     def post(self, request, slug):
+        print(request.data)
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         patient = AnalysisService(**serializer.validated_data)
@@ -76,7 +76,7 @@ class PatientCholesterolCreateApi(views.APIView):
     # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all(), many=False)
+        patient_slug = serializers.CharField()
         cholesterol = serializers.FloatField()
         hdl_cholesterol = serializers.FloatField()
         ldl_cholesterol = serializers.FloatField()
@@ -84,9 +84,10 @@ class PatientCholesterolCreateApi(views.APIView):
 
         class Meta:
             model = CholesterolAnalysis
-            fields = ('patient_card', 'cholesterol', 'hdl_cholesterol', 'ldl_cholesterol', 'triglycerides',)
+            fields = ('cholesterol', 'hdl_cholesterol', 'ldl_cholesterol', 'patient_slug', 'triglycerides',)
 
     def post(self, request, slug):
+        print(request.data)
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         patient = AnalysisService(**serializer.validated_data)
@@ -117,17 +118,31 @@ class CardCreateApi(views.APIView):
     # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
-        patient = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=False)
+        patient_slug = serializers.CharField()
         smoke = serializers.BooleanField()
         alcohol = serializers.BooleanField()
         blood_type = serializers.ChoiceField(choices=PatientCard.BloodType.choices)
         abnormal_conditions = serializers.CharField()
-        allergies = serializers.JSONField()
         active = serializers.BooleanField()
+        height = serializers.IntegerField()
+        weight = serializers.FloatField()
+        gender = serializers.ChoiceField(choices=PatientCard.GenderType.choices)
+        birthday = serializers.DateField()
 
         class Meta:
             model = PatientCard
-            fields = '__all__'
+            fields = (
+                'patient_slug',
+                'smoke',
+                'alcohol',
+                'blood_type',
+                'abnormal_conditions',
+                'active',
+                'weight',
+                'height',
+                'gender',
+                'birthday',
+            )
 
     def post(self, request, slug):
         serializer = self.InputSerializer(data=request.data)
@@ -143,24 +158,38 @@ class CardListApi(views.APIView):
 
     class OutputSerializer(serializers.ModelSerializer):
         patient = inline_serializer(fields={
-            'user.first_name': serializers.CharField(),
-            'user.last_name': serializers.CharField(),
-            'user.email': serializers.EmailField(),
-            'age': serializers.IntegerField(),
-            'height': serializers.IntegerField(),
-            'weight': serializers.FloatField(),
-            'birthday': serializers.DateField
+            'user': inline_serializer(fields={
+                'first_name': serializers.CharField(),
+                'last_name': serializers.CharField(),
+                'email': serializers.CharField(),
+            }),
         })
         smoke = serializers.FloatField()
         active = serializers.FloatField()
         alcohol = serializers.FloatField()
         blood_type = serializers.ChoiceField(choices=PatientCard.BloodType.choices)
-        allergies = serializers.JSONField()
         abnormal_conditions = serializers.CharField()
+        age = serializers.IntegerField()
+        height = serializers.IntegerField()
+        weight = serializers.IntegerField()
+        birthday = serializers.DateField()
+        gender = serializers.ChoiceField(choices=PatientCard.GenderType.choices)
 
         class Meta:
             model = PatientCard
-            fields = '__all__'
+            fields = (
+                'patient',
+                'smoke',
+                'active',
+                'alcohol',
+                'abnormal_conditions',
+                'blood_type',
+                'age',
+                'height',
+                'weight',
+                'birthday',
+                'gender',
+            )
 
     def get(self, request):
         patients = AnalysisSelector()
@@ -169,28 +198,42 @@ class CardListApi(views.APIView):
 
 
 class CardDetailApi(views.APIView):
-    # permission_classes = (IsPatient,)
+    # permission_classes = (IsPatient | IsDoctor,)
 
     class OutputSerializer(serializers.Serializer):
         patient = inline_serializer(fields={
-            'user.first_name': serializers.CharField(),
-            'user.last_name': serializers.CharField(),
-            'user.email': serializers.EmailField(),
-            'age': serializers.IntegerField(),
-            'height': serializers.IntegerField(),
-            'weight': serializers.FloatField(),
-            'birthday': serializers.DateField(),
-            'gender': serializers.CharField(),
+            'user': inline_serializer(fields={
+                'first_name': serializers.CharField(),
+                'last_name': serializers.CharField(),
+                'email': serializers.CharField(),
+            }),
         })
         smoke = serializers.FloatField()
         active = serializers.FloatField()
         alcohol = serializers.FloatField()
         blood_type = serializers.ChoiceField(choices=PatientCard.BloodType.choices)
         abnormal_conditions = serializers.CharField()
+        age = serializers.IntegerField()
+        height = serializers.IntegerField()
+        weight = serializers.IntegerField()
+        birthday = serializers.DateField()
+        gender = serializers.ChoiceField(choices=PatientCard.GenderType.choices)
 
         class Meta:
             model = PatientCard
-            fields = ('patient', 'smoke', 'active', 'alcohol', 'abnormal_conditions', 'blood_type',)
+            fields = (
+                'patient',
+                'smoke',
+                'active',
+                'alcohol',
+                'abnormal_conditions',
+                'blood_type',
+                'age',
+                'height',
+                'weight',
+                'birthday',
+                'gender',
+            )
 
     def get(self, request, slug):
         patients = AnalysisSelector()
@@ -253,15 +296,16 @@ class ConclusionCreateApi(views.APIView):
     # permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.Serializer):
-        patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all())
+        patient_slug = serializers.CharField()
         description = serializers.CharField()
         recommendations = serializers.CharField()
 
         class Meta:
             model = Conclusion
-            fields = '__all__'
+            fields = ('patient_slug', 'description', 'recommendations',)
 
     def post(self, request, slug):
+        print(request.data)
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         prescription = AnalysisService(**serializer.validated_data)

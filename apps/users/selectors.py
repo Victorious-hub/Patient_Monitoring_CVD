@@ -2,7 +2,6 @@ from typing import Iterable
 from django.db import transaction
 from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
-
 from apps.users.models import (
     DoctorProfile,
     PatientCard,
@@ -56,8 +55,23 @@ class DoctorSelector:
 
     @transaction.atomic
     def schedule_list(self) -> Iterable[Schedule]:
-        schedule = Schedule.objects.all()
-        return schedule
+        schedules = Schedule.objects.all().select_related('doctor__user')
+        res = []
+        for schedule in schedules:
+            doctor_info = {
+                "user": {
+                    "first_name": schedule.doctor.user.first_name,
+                    "last_name": schedule.doctor.user.last_name,
+                    "email": schedule.doctor.user.email,
+                }
+            }
+            for date, time_slots in schedule.available_time.items():
+                if time_slots:
+                    res.append({
+                        "doctor": doctor_info,
+                        "available_time": {date: time_slots},
+                    })
+        return res
 
     @transaction.atomic
     def schedule_detail(self, slug) -> Iterable[Schedule]:

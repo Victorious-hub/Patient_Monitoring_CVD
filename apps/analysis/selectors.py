@@ -2,7 +2,7 @@ from django.db import transaction
 from typing import Iterable
 from django.db.models import Prefetch
 
-from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, Diagnosis
+from apps.analysis.models import BloodAnalysis, CholesterolAnalysis, Conclusion, Diagnosis
 from apps.users.exceptions import CardNotExistsException
 from apps.users.models import DoctorProfile, PatientCard, PatientProfile
 from apps.users.utils import get_object
@@ -19,8 +19,7 @@ class AnalysisSelector:
     def blood_analysis_get(self,
                            slug: str
                            ) -> BloodAnalysis:
-        patient = get_object(PatientProfile, slug=slug)
-        patient_card = get_object(PatientCard, patient=patient)
+        patient_card = get_object(PatientCard, patient__slug=slug)
         blood_analysis = BloodAnalysis.objects.filter(patient=patient_card)
         # blood_analysis = BloodAnalysis.objects.filter(patient=patient_card).order_by('id').last()
 
@@ -30,8 +29,7 @@ class AnalysisSelector:
     def cholesterol_analysis_get(self,
                                  slug: str
                                  ) -> CholesterolAnalysis:
-        patient = get_object(PatientProfile, slug=slug)
-        patient_card = get_object(PatientCard, patient=patient)
+        patient_card = get_object(PatientCard, patient__slug=slug)
         cholesterol_analysis = CholesterolAnalysis.objects.filter(patient=patient_card)
         # blood_analysis = CholesterolAnalysis.objects.filter(patient=patient_card).order_by('id').last()
 
@@ -59,3 +57,13 @@ class AnalysisSelector:
         except Exception:
             raise CardNotExistsException
         return patient_card
+
+    @transaction.atomic
+    def patient_diagnosis_get(self, slug: str) -> Iterable[Diagnosis]:
+        diagnosis = Diagnosis.objects.filter(patient__patient__slug=slug).last()
+        return diagnosis
+
+    @transaction.atomic
+    def patient_conclusions_get(self, slug: str) -> Iterable[Diagnosis]:
+        diagnosis = Conclusion.objects.filter(patient__patient__slug=slug)
+        return diagnosis

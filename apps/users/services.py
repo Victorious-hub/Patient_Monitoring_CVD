@@ -137,17 +137,17 @@ class DoctorService(HandlerMixin):
     def patient_list_update(
         self,
         slug: str,
+        patient: PatientProfile,
     ) -> DoctorProfile:
         """Method to add patients to doctor's current list of patients
         """
         doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
 
-        doctor.patients.add(*self.patients)  # unpacking
+        doctor.patients.add(patient)
         doctor.save()
-        for i in self.patients:
-            transaction.on_commit(
-                lambda: add_patient.delay(slug, i.slug)
-            )
+        transaction.on_commit(
+            lambda: add_patient.delay(slug, patient.slug)
+        )
 
         return doctor
 
@@ -168,7 +168,7 @@ class DoctorService(HandlerMixin):
         return doctor
 
     @transaction.atomic
-    def appointment_create(self, slug):
+    def appointment_create(self, slug: str):
         doctor = get_object(DoctorProfile, slug=self.doctor_slug)
         patient = get_object(PatientProfile, slug=slug)
         schedule: Schedule = Schedule.objects.filter(available_time__has_key=self.appointment_date)
@@ -186,8 +186,6 @@ class DoctorService(HandlerMixin):
                 obj.save()
                 i.save()
 
-                # transaction.on_commit(
-                #     lambda: patient_appointment_creation.delay(slug, i.slug)
-                # )
+                self.patient_list_update(self.doctor_slug, patient)
 
                 return obj

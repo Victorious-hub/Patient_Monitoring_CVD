@@ -12,7 +12,6 @@ from apps.users.utils import get_object
 def add_patient(slug: str, patient_slug: str):
     patient = get_object(PatientProfile, slug=patient_slug)
     doctor = get_object(DoctorProfile, slug=slug)
-    print(patient)
     notification = Notification.objects.create(
         notification_type='DL',
         patient=patient,

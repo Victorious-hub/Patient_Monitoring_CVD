@@ -4,7 +4,7 @@ from django.db import transaction
 
 from apps.treatment.models import Appointment, Medication, Prescription
 from apps.users.exceptions import DoctorNotFound
-from apps.users.models import DoctorProfile, PatientCard
+from apps.users.models import DoctorProfile, PatientCard, PatientProfile
 from apps.users.tasks import send_appointment
 from apps.users.utils import get_object
 
@@ -94,10 +94,12 @@ class TreatmentService:
         if not DoctorProfile.objects.filter(slug=slug).exists():
             raise DoctorNotFound
 
-        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
+        patient = get_object(PatientProfile, slug=self.patient_slug)
+        doctor = get_object(DoctorProfile, slug=slug)
 
         obj = Appointment.objects.create(
-            patient_card=patient_card,
+            patient=patient,
+            doctor=doctor,
             appointment_date=self.appointment_date,
             appointment_time=self.appointment_time
         )

@@ -174,6 +174,9 @@ class CardListApi(views.APIView):
         weight = serializers.IntegerField()
         birthday = serializers.DateField()
         gender = serializers.ChoiceField(choices=PatientCard.GenderType.choices)
+        analysis_status = serializers.ChoiceField(choices=PatientCard.AnalysisStatus.choices)
+        is_cholesterol_analysis = serializers.BooleanField()
+        is_blood_analysis = serializers.BooleanField()
 
         class Meta:
             model = PatientCard
@@ -189,6 +192,9 @@ class CardListApi(views.APIView):
                 'weight',
                 'birthday',
                 'gender',
+                'is_blood_analysis',
+                'is_cholesterol_analysis',
+                'analysis_status',
             )
 
     def get(self, request):
@@ -218,6 +224,9 @@ class CardDetailApi(views.APIView):
         weight = serializers.IntegerField()
         birthday = serializers.DateField()
         gender = serializers.ChoiceField(choices=PatientCard.GenderType.choices)
+        analysis_status = serializers.ChoiceField(choices=PatientCard.AnalysisStatus.choices)
+        is_cholesterol_analysis = serializers.BooleanField()
+        is_blood_analysis = serializers.BooleanField()
 
         class Meta:
             model = PatientCard
@@ -233,31 +242,15 @@ class CardDetailApi(views.APIView):
                 'weight',
                 'birthday',
                 'gender',
+                'is_blood_analysis',
+                'is_cholesterol_analysis',
+                'analysis_status',
             )
 
     def get(self, request, slug):
         patients = AnalysisSelector()
         data = self.OutputSerializer(patients.patient_get_card(slug=slug)).data
         return Response(data, status=status.HTTP_200_OK)
-
-
-class DiseaseCreateApi(views.APIView):
-    # permission_classes = (IsDoctor,)
-
-    class InputSerializer(serializers.ModelSerializer):
-        patient_card = serializers.PrimaryKeyRelatedField(queryset=PatientCard.objects.all(), many=False)
-
-        class Meta:
-            model = Diagnosis
-            fields = ('patient_card',)
-
-    def post(self, request, slug):
-        serializer = self.InputSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        patient = AnalysisService(**serializer.validated_data)
-        patient.diagnosis_create(slug)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class DiseaseDoctorDetailApi(views.APIView):
@@ -311,3 +304,48 @@ class ConclusionCreateApi(views.APIView):
         prescription = AnalysisService(**serializer.validated_data)
         prescription.conclusion_create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class PatientDiagnosisDetailApi(views.APIView):
+    # permission_classes = (IsDoctor | IsPatient,)
+
+    class OutputSerializer(serializers.ModelSerializer):
+        blood_analysis = inline_serializer(fields={
+            'glucose': serializers.FloatField(),
+            'ap_hi': serializers.IntegerField(),
+            'ap_lo': serializers.IntegerField(),
+        })
+        cholesterol_analysis = inline_serializer(fields={
+            'cholesterol': serializers.FloatField(),
+            'hdl_cholesterol': serializers.FloatField(),
+            'ldl_cholesterol': serializers.FloatField(),
+            'triglycerides': serializers.FloatField(),
+        })
+        anomaly = serializers.BooleanField()
+
+        class Meta:
+            model = Diagnosis
+            fields = ('anomaly', 'blood_analysis', 'cholesterol_analysis',)
+
+    def get(self, request, slug):
+        patients = AnalysisSelector()
+        data = self.OutputSerializer(patients.patient_diagnosis_get(slug)).data
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class PatientConclusionDetailApi(views.APIView):
+    # permission_classes = (IsDoctor | IsPatient,)
+
+    class OutputSerializer(serializers.ModelSerializer):
+        description = serializers.CharField()
+        recommendations = serializers.CharField()
+        created_at = serializers.DateField()
+
+        class Meta:
+            model = Diagnosis
+            fields = ('description', 'recommendations', 'created_at',)
+
+    def get(self, request, slug):
+        patients = AnalysisSelector()
+        data = self.OutputSerializer(patients.patient_conclusions_get(slug), many=True).data
+        return Response(data, status=status.HTTP_200_OK)

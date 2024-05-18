@@ -1,9 +1,10 @@
 from django.db import models
-from apps.users.models import PatientCard
+from apps.users.models import DoctorProfile, PatientCard
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 class BaseModel(models.Model):
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE)
     patient = models.ForeignKey(PatientCard, on_delete=models.CASCADE)
     created_at = models.DateField(auto_now_add=True)
 
@@ -55,7 +56,6 @@ class Conclusion(BaseModel):
     analysis_result = models.ForeignKey(Diagnosis, on_delete=models.CASCADE)
     description = models.TextField()
     recommendations = models.TextField()
-    created_at = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return f"Doctor conclusion: {self.patient.patient.user.first_name}"

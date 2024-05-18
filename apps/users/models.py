@@ -62,6 +62,11 @@ class PatientCard(models.Model):
         FEMALE = 'Female', _('F')
         NONE = 'None', _('N')
 
+    class AnalysisStatus(models.TextChoices):
+        NOT_COMPLETED = 'NC', _('NC')
+        PARTLY_COMPLETED = 'PC', _('PC')
+        COMPLETED = 'CT', _('CT')
+
     patient = models.OneToOneField(PatientProfile, on_delete=models.CASCADE, related_name='patient_card')
     blood_type = models.CharField(max_length=255, choices=BloodType.choices)
     allergies = models.JSONField(default=list, null=True, blank=True)
@@ -77,6 +82,9 @@ class PatientCard(models.Model):
     gender = models.CharField(blank=True, null=True, max_length=255, choices=GenderType.choices, default="None")
     age = models.IntegerField(blank=True, null=True)
     birthday = models.DateField(blank=True, null=True)
+    analysis_status = models.CharField(blank=True, null=True, max_length=255, choices=AnalysisStatus.choices, default="NC")
+    is_cholesterol_analysis = models.BooleanField(default=False)
+    is_blood_analysis = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Patient Card: {self.patient.user.first_name} - {self.patient.user.last_name}"
@@ -97,7 +105,7 @@ class DoctorProfile(models.Model):
     patients = models.ManyToManyField(PatientProfile, related_name='patients')
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, editable=False)
     patient_cards = models.ManyToManyField(PatientCard, related_name='patient_cards')
-    profile_image = models.ImageField(upload_to='images/', null=False, blank=True)
+    profile_image = models.ImageField(upload_to='images/', null=False, blank=True, default='images/account.png')
 
     class Meta:
         verbose_name = "doctor"
@@ -122,5 +130,3 @@ class Schedule(models.Model):
 
     def __str__(self):
         return f"Doctor: {self.doctor}"
-
-# class Reception(models.M)

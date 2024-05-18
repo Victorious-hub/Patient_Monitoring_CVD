@@ -1,8 +1,5 @@
 from datetime import datetime
-import os
-import pickle
 from django.db import transaction
-import numpy as np
 
 from .mixins import ValidationMixin
 
@@ -14,7 +11,7 @@ from .tasks import (
     card_creation_notificate,
     cholesterol_analysis_notificate,
     conclusion_notificate,
-    diagnosis_notificate
+    create_prediction,
 )
 
 from apps.analysis.models import (
@@ -78,30 +75,22 @@ class AnalysisService(ValidationMixin):
         self.ldl_cholesterol = ldl_cholesterol
         self.triglycerides = triglycerides
 
-    def _predict_anomaly(self, features: list):
-        model_path = os.path.join(os.path.dirname(__file__), 'model', 'anomaly_prediction.pkl')
-        with open(model_path, 'rb') as file:
-            model = pickle.load(file)
-
-        new_data = np.array(list(features)).reshape(1, -1)
-        predicted_anomaly = model.predict(new_data)[0]
-        return predicted_anomaly
-
     @transaction.atomic
     def blood_analysis_create(self,
                               slug: str,
                               ) -> BloodAnalysis:
         """Method to create a blood analysis for patient
         """
-
         self._check_doctor_exists(slug)
-        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
+        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
+        doctor = get_object(DoctorProfile, slug=slug)
 
         obj = BloodAnalysis.objects.create(
             patient=patient_card,
             ap_hi=self.ap_hi,
             ap_lo=self.ap_lo,
             glucose=self.glucose,
+            doctor=doctor
         )
         obj.full_clean()
         obj.save()
@@ -109,6 +98,15 @@ class AnalysisService(ValidationMixin):
         transaction.on_commit(
             lambda: blood_analysis_notificate.delay(slug, self.patient_slug)
         )
+
+        if not patient_card.is_cholesterol_analysis:
+            patient_card.analysis_status = 'PC'
+            patient_card.is_blood_analysis = True
+            patient_card.save()
+        else:
+            transaction.on_commit(
+                lambda: create_prediction.delay(slug, self.patient_slug, slug)
+            )
 
         return obj
 
@@ -121,14 +119,16 @@ class AnalysisService(ValidationMixin):
 
         self._check_doctor_exists(slug)
 
-        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
+        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
+        doctor = get_object(DoctorProfile, slug=slug)
 
         obj = CholesterolAnalysis.objects.create(
             patient=patient_card,
             cholesterol=self.cholesterol,
             hdl_cholesterol=self.hdl_cholesterol,
             ldl_cholesterol=self.ldl_cholesterol,
-            triglycerides=self.triglycerides
+            triglycerides=self.triglycerides,
+            doctor=doctor
         )
         obj.full_clean()
         obj.save()
@@ -136,6 +136,15 @@ class AnalysisService(ValidationMixin):
         transaction.on_commit(
             lambda: cholesterol_analysis_notificate.delay(slug, self.patient_slug)
         )
+
+        if not patient_card.is_blood_analysis:
+            patient_card.analysis_status = 'PC'
+            patient_card.is_cholesterol_analysis = True
+            patient_card.save()
+        else:
+            transaction.on_commit(
+                lambda: create_prediction.delay(slug, self.patient_slug, slug)
+            )
 
         return obj
 
@@ -177,65 +186,26 @@ class AnalysisService(ValidationMixin):
         return patient_card
 
     @transaction.atomic
-    def diagnosis_create(
-        self,
-        slug: str,
-    ) -> Diagnosis:
-        """Method to predict a potential cvd anomalies for patient
-        """
-
-        self._check_doctor_exists(slug)
-
-        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
-        blood_obj = BloodAnalysis.objects.filter(patient=patient_card).last()
-        cholesterol_obj = CholesterolAnalysis.objects.filter(patient=patient_card).last()
-
-        patient_card.gender = 1 if patient_card.gender == "Male" else 0
-        preditction = self._predict_anomaly([
-            blood_obj.ap_hi,
-            blood_obj.ap_lo,
-            blood_obj.glucose,
-            cholesterol_obj.cholesterol,
-            patient_card.active,
-            patient_card.alcohol,
-            patient_card.smoke,
-            patient_card.age,
-            patient_card.gender,
-            patient_card.height,
-            patient_card.weight,
-        ])
-
-        print(f"Anomaly: {preditction}")
-
-        obj = Diagnosis.objects.create(
-            patient=patient_card,
-            blood_analysis=blood_obj,
-            cholesterol_analysis=cholesterol_obj,
-            anomaly=preditction,
-        )
-        obj.full_clean()
-        obj.save()
-
-        transaction.on_commit(
-            lambda: diagnosis_notificate.delay(slug, self.patient_slug)
-        )
-
-        return obj
-
-    @transaction.atomic
     def conclusion_create(self, slug) -> Conclusion:
         """Method to create a conclusion for patient
         """
         self._check_doctor_exists(slug)
 
-        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
-        analysis = Diagnosis.objects.filter(patient_card=patient_card).last()
+        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
+        analysis = Diagnosis.objects.filter(patient=patient_card).last()
+        doctor = get_object(DoctorProfile, slug=slug)
 
         obj = Conclusion.objects.create(
             analysis_result=analysis,
             description=self.description,
             recommendations=self.recommendations,
+            patient=patient_card,
+            doctor=doctor
         )
+
+        patient_card.analysis_status = 'NC'
+        patient_card.is_blood_analysis, patient_card.is_cholesterol_analysis = False, False
+        patient_card.save()
 
         obj.full_clean()
         obj.save()

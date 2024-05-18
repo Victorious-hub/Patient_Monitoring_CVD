@@ -5,13 +5,14 @@ from .apis import (
     CardDetailApi,
     CardListApi,
     ConclusionCreateApi,
-    DiseaseCreateApi,
     DiseaseDoctorDetailApi,
     PatientBloodCreateApi,
     PatientBloodDetailApi,
     PatientBloodListeApi,
     PatientCholesterolCreateApi,
     PatientCholesterolDetailApi,
+    PatientConclusionDetailApi,
+    PatientDiagnosisDetailApi,
 )
 
 urlpatterns = [
@@ -23,7 +24,9 @@ urlpatterns = [
     path('v1/patient/cholesterol/analysis/<str:slug>', PatientCholesterolCreateApi.as_view(),
          name='create_cholesterol_analysis'),
     path('v1/patient/blood/<str:slug>/get', PatientBloodDetailApi.as_view(), name='get_blood_analysis'),
-    path('v1/patient/disease/analysis/<str:slug>', DiseaseCreateApi.as_view(), name='disease_analysis'),
     path('v1/patient/disease/analysis/<str:slug>/get', DiseaseDoctorDetailApi.as_view(), name='disease_analysis'),
     path('v1/patient/conclusion/<str:slug>/create', ConclusionCreateApi.as_view(), name='create_appointment'),
-    path('v1/patient/cholesterol/<str:slug>/get', PatientCholesterolDetailApi.as_view(), name='cholesterol_list_analysis')]
+    path('v1/patient/cholesterol/<str:slug>/get', PatientCholesterolDetailApi.as_view(), name='cholesterol_list_analysis'),
+    path('v1/patient/diagnosis/<str:slug>', PatientDiagnosisDetailApi.as_view()),
+    path('v1/patient/conclusion/<str:slug>/get', PatientConclusionDetailApi.as_view())
+]

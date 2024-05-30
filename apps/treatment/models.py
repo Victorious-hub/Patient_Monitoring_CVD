@@ -29,11 +29,14 @@ class Medication(models.Model):
 
 
 class Prescription(models.Model):
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE)
     patient_card = models.ForeignKey(PatientCard, on_delete=models.CASCADE)
     medication = models.ForeignKey(Medication, on_delete=models.CASCADE)
     dosage = models.CharField(max_length=100)
     start_date = models.DateField()
     end_date = models.DateField()
+    is_declined = models.BooleanField(default=False)
+    decliend_reason = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         verbose_name = "prescription"

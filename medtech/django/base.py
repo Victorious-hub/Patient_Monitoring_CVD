@@ -22,6 +22,12 @@ CORS_ORIGIN_WHITELIST = [
 
 CELERY_BROKER_URL = 'redis://redis:6379'
 CELERY_RESULT_BACKEND = 'redis://redis:6379'
+# CELERY_BEAT_SCHEDULE = {
+#     "filter_schedule_task": {
+#         "task": "apps.users.filter_schedule_task",
+#         "schedule": crontab(minute="*/1"),
+#     },
+# }
 
 LOCAL_APPS = [
     'apps.users.apps.UsersConfig',
@@ -105,6 +111,7 @@ DATABASES = {
         'HOST': 'db',
         'PORT': 5432,
         'PASSWORD': 'strong-password',
+        'ATOMIC_REQUESTS': True,
     }
 }
 

@@ -13,7 +13,7 @@ from apps.users.models import (
 )
 
 
-class HandlerMixin:
+class UserValidationMixin:
     PATTERN = r'^\+\d{10}$'
 
     def _validate_credentials(

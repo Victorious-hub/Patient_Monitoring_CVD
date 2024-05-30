@@ -9,6 +9,7 @@ class Notification(models.Model):
         DOCTOR_LIST = 'DL', _('DoctorList')
         APPOINTMENT = 'AP', _('Appointment')
         CARD = 'CD', _('Card')
+        PRESCRIPTION = 'PC', _('Prescription')
         DIAGNOSIS = 'DA', _('Diagnosis')
         CONCLUSION = 'CU', _('Conclusion')
 
@@ -21,13 +22,6 @@ class Notification(models.Model):
     class Meta:
         verbose_name = "notification"
         verbose_name_plural = "notifications"
-
-    def __str__(self):
-        return self.message
-
-
-class Test(models.Model):
-    message = models.TextField()
 
     def __str__(self):
         return self.message

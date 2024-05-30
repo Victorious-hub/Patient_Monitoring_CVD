@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import models
 from django.utils.text import slugify
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -5,7 +6,6 @@ from .managers import CustomUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from datetime import date
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
@@ -31,7 +31,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 
 class PatientProfile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='patient')
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     has_card = models.BooleanField(default=False, blank=True, null=True)
     mobile = models.CharField(max_length=11, unique=True, blank=True, null=True)
     address = models.CharField(max_length=255, null=True, blank=True)
@@ -58,16 +58,11 @@ class PatientCard(models.Model):
         GROUP_4 = 'Group IV', _('IV')
 
     class GenderType(models.TextChoices):
-        MALE = 'Male', _('M')
-        FEMALE = 'Female', _('F')
-        NONE = 'None', _('N')
+        MALE = 'Male', _('Male')
+        FEMALE = 'Female', _('Female')
+        NONE = 'None', _('None')
 
-    class AnalysisStatus(models.TextChoices):
-        NOT_COMPLETED = 'NC', _('NC')
-        PARTLY_COMPLETED = 'PC', _('PC')
-        COMPLETED = 'CT', _('CT')
-
-    patient = models.OneToOneField(PatientProfile, on_delete=models.CASCADE, related_name='patient_card')
+    patient = models.OneToOneField(PatientProfile, on_delete=models.CASCADE)
     blood_type = models.CharField(max_length=255, choices=BloodType.choices)
     allergies = models.JSONField(default=list, null=True, blank=True)
     abnormal_conditions = models.TextField()
@@ -78,13 +73,16 @@ class PatientCard(models.Model):
         MinValueValidator(1),
         MaxValueValidator(300)
     ])
-    height = models.IntegerField(blank=True, null=True)
+    height = models.IntegerField(blank=True, null=True, validators=[
+        MinValueValidator(1),
+        MaxValueValidator(220)
+    ])
     gender = models.CharField(blank=True, null=True, max_length=255, choices=GenderType.choices, default="None")
     age = models.IntegerField(blank=True, null=True)
     birthday = models.DateField(blank=True, null=True)
-    analysis_status = models.CharField(blank=True, null=True, max_length=255, choices=AnalysisStatus.choices, default="NC")
     is_cholesterol_analysis = models.BooleanField(default=False)
     is_blood_analysis = models.BooleanField(default=False)
+    is_confirmed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Patient Card: {self.patient.user.first_name} - {self.patient.user.last_name}"
@@ -101,11 +99,13 @@ class PatientCard(models.Model):
 
 
 class DoctorProfile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='doctor')
-    patients = models.ManyToManyField(PatientProfile, related_name='patients')
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    patients = models.ManyToManyField(PatientProfile)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, editable=False)
-    patient_cards = models.ManyToManyField(PatientCard, related_name='patient_cards')
+    patient_cards = models.ManyToManyField(PatientCard)
     profile_image = models.ImageField(upload_to='images/', null=False, blank=True, default='images/account.png')
+    description = models.TextField(default="")
+    experience = models.IntegerField(default=0)
 
     class Meta:
         verbose_name = "doctor"
@@ -121,7 +121,7 @@ class DoctorProfile(models.Model):
 
 
 class Schedule(models.Model):
-    doctor = models.ForeignKey(DoctorProfile, on_delete=models.DO_NOTHING)
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE)
     available_time = models.JSONField()
 
     class Meta:

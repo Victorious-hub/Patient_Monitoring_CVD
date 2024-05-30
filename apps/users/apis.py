@@ -9,23 +9,16 @@ from rest_framework import status
 from django.core.files.base import ContentFile
 from rest_framework.response import Response
 from rest_framework import serializers
-from apps.treatment.models import Appointment
-from apps.users.services import (
+from .permissions import IsPatient, IsDoctor
+from .selectors import DoctorSelector, PatientSelector
+from .utils import inline_serializer
+from .models import PatientProfile, DoctorProfile
+from .services import (
     DoctorService,
     PatientService,
     RegistrationService,
 )
-
-from apps.users.selectors import (
-    DoctorSelector,
-    PatientSelector
-)
-from apps.users.utils import inline_serializer
-
-from .models import (
-    PatientProfile,
-    DoctorProfile,
-)
+from apps.treatment.models import Appointment
 
 logger = logging.getLogger(__name__)
 
@@ -83,31 +76,8 @@ class PatientCreateApi(views.APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# class PatientUpdateDataApi(views.APIView):
-#     # permission_classes = (IsPatient,)
-
-#     class InputSerializer(serializers.ModelSerializer):
-#         weight = serializers.FloatField(),
-#         height = serializers.IntegerField(),
-#         age = serializers.IntegerField(),
-#         gender = serializers.ChoiceField(choices=PatientProfile.GenderType.choices)
-#         birthday = serializers.DateField(),
-
-#         class Meta:
-#             model = PatientProfile
-#             fields = ('weight', 'height', 'gender', 'age', 'birthday')
-
-#     def put(self, request, slug):
-#         print(request.data)
-#         serializer = self.InputSerializer(data=request.data, partial=True)
-#         serializer.is_valid(raise_exception=True)
-#         patient_service = PatientService(**serializer.validated_data)
-#         patient_service.patient_update_data(slug)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 class PatientUpdateContactApi(views.APIView):
-    # permission_classes = (IsPatient,)
+    permission_classes = (IsPatient,)
 
     class InputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -131,7 +101,7 @@ class PatientUpdateContactApi(views.APIView):
 
 
 class PatientListApi(views.APIView):
-    # permission_classes = (IsPatient,)
+    permission_classes = (IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         mobile = serializers.CharField(),
@@ -156,7 +126,7 @@ class PatientListApi(views.APIView):
 
 
 class PatientDetailApi(views.APIView):
-    # permission_classes = (IsPatient,)
+    permission_classes = (IsPatient | IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
         mobile = serializers.CharField(),
@@ -188,10 +158,12 @@ class DoctorCreateApi(views.APIView):
             'email': serializers.EmailField(),
             'password': serializers.CharField(),
         })
+        experience = serializers.IntegerField()
+        description = serializers.CharField()
 
         class Meta:
             model = DoctorProfile
-            fields = ('user',)
+            fields = ('user', 'experience', 'description',)
 
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)
@@ -202,8 +174,6 @@ class DoctorCreateApi(views.APIView):
 
 
 class DoctorListApi(views.APIView):
-    # permission_classes = (IsDoctor,)
-
     class OutputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
@@ -223,7 +193,7 @@ class DoctorListApi(views.APIView):
 
 
 class PatientDoctorListApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor | IsPatient,)
 
     class OutputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -232,10 +202,11 @@ class PatientDoctorListApi(views.APIView):
             'email': serializers.EmailField(),
         })
         profile_image = Base64ImageField(max_length=None, use_url=True)
+        description = serializers.CharField()
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'profile_image',)
+            fields = ('user', 'profile_image', 'description',)
 
     def get(self, request, slug):
         patients = PatientSelector()
@@ -244,36 +215,21 @@ class PatientDoctorListApi(views.APIView):
 
 
 class DoctorDetailApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
-        # patients = inline_serializer(fields={
-        #     'user.first_name': serializers.CharField(),
-        #     'user.last_name': serializers.CharField(),
-        #     'user.email': serializers.EmailField(),
-        #     'height': serializers.IntegerField(),
-        #     'weight': serializers.FloatField(),
-        #     'gender': serializers.ChoiceField(choices=CustomUser.RoleType.choices),
-        #     'age': serializers.IntegerField(),
-        #     'birthday': serializers.DateField(),
-        # }, many=True)
-        # patient_cards = inline_serializer(fields={
-        #     'blood_type': serializers.BooleanField(),
-        #     'allergies': serializers.JSONField(),
-        #     'abnormal_conditions': serializers.CharField(),
-        #     'smoke': serializers.BooleanField(),
-        #     'alcohol': serializers.BooleanField(),
-        # }, many=True)
         profile_image = Base64ImageField(max_length=None, use_url=True)
         user = inline_serializer(fields={
             'first_name': serializers.CharField(),
             'last_name': serializers.CharField(),
             'email': serializers.EmailField(),
         })
+        experience = serializers.IntegerField()
+        description = serializers.CharField()
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'profile_image',)
+            fields = ('user', 'profile_image', 'experience', 'description',)
 
     def get(self, request, slug):
         doctors = DoctorSelector()
@@ -282,7 +238,7 @@ class DoctorDetailApi(views.APIView):
 
 
 class DoctorUpdateApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -299,24 +255,6 @@ class DoctorUpdateApi(views.APIView):
         serializer.is_valid(raise_exception=True)
         doctor = DoctorService(**serializer.validated_data)
         doctor.doctor_contact_update(slug)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class DoctorPatientAddApi(views.APIView):
-    # permission_classes = (IsDoctor,)
-
-    class InputSerializer(serializers.ModelSerializer):
-        patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all(), many=True)
-
-        class Meta:
-            model = DoctorProfile
-            fields = ('patients',)
-
-    def put(self, request, slug):
-        serializer = self.InputSerializer(data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        doctor = DoctorService(**serializer.validated_data)
-        doctor.patient_list_update(slug=slug)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -339,6 +277,8 @@ class DoctorPatientDeleteApi(views.APIView):
 
 
 class DoctorPatientListApi(views.APIView):
+    permission_classes = (IsDoctor | IsPatient,)
+
     class OutputSerializer(serializers.Serializer):
         patients = inline_serializer(fields={
             'user': inline_serializer(fields={
@@ -359,6 +299,8 @@ class DoctorPatientListApi(views.APIView):
 
 
 class DoctorPatientDetailApi(views.APIView):
+    permission_classes = (IsDoctor | IsPatient,)
+
     class OutputSerializer(serializers.Serializer):
         patients = inline_serializer(fields={
             'user': inline_serializer(fields={
@@ -379,8 +321,13 @@ class DoctorPatientDetailApi(views.APIView):
 
 
 class ScheduleListApi(views.APIView):
+    permission_classes = (IsDoctor | IsPatient,)
+
     class OutputSerializer(serializers.ModelSerializer):
         doctor = inline_serializer(fields={
+            'profile_image': Base64ImageField(max_length=None, use_url=True),
+            'description': serializers.CharField(),
+            'experience': serializers.IntegerField(),
             'user': inline_serializer(fields={
                 'first_name': serializers.CharField(),
                 'last_name': serializers.CharField(),
@@ -400,6 +347,8 @@ class ScheduleListApi(views.APIView):
 
 
 class ScheduleSignCreateApi(views.APIView):
+    permission_classes = (IsDoctor | IsPatient,)
+
     class InputSerializer(serializers.Serializer):
         doctor_slug = serializers.CharField()
         appointment_date = serializers.CharField()
@@ -410,29 +359,9 @@ class ScheduleSignCreateApi(views.APIView):
             fields = ('doctor_slug', 'appointment_date', 'appointment_time',)
 
     def post(self, request, slug):
+        print(request.data)
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         appointment = DoctorService(**serializer.validated_data)
         appointment.appointment_create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class ScheduleDetailApi(views.APIView):
-    class OutputSerializer(serializers.Serializer):
-        doctor = inline_serializer(fields={
-            'user': inline_serializer(fields={
-                'first_name': serializers.CharField(),
-                'last_name': serializers.CharField(),
-                'email': serializers.CharField(),
-            }),
-        })
-        available_time = serializers.JSONField()
-
-        class Meta:
-            model = DoctorProfile
-            fields = ('doctor', 'available_time',)
-
-    def get(self, request, slug):
-        doctors = DoctorSelector()
-        data = self.OutputSerializer(doctors.schedule_detail(slug)).data
-        return Response(data, status=status.HTTP_200_OK)

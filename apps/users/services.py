@@ -1,21 +1,28 @@
-from datetime import datetime
 import uuid
+from datetime import datetime
 from django.db import transaction
 from apps.treatment.models import Appointment
-from apps.users.mixins import HandlerMixin
-from apps.users.models import DoctorProfile, PatientProfile, CustomUser, Schedule
-from django.contrib.auth.hashers import make_password
-from apps.users.tasks import add_patient
+from .mixins import UserValidationMixin
 from apps.users.utils import get_object
+from django.contrib.auth.hashers import make_password
+from apps.users.models import DoctorProfile, PatientProfile, CustomUser, Schedule
+from apps.users.tasks import patient_add_task, consulting_appointment_task
 
 
-class RegistrationService(HandlerMixin):
+class RegistrationService(UserValidationMixin):
     def __init__(self,
                  user: CustomUser = None,
+                 experience: int = None,
+                 description: str = None
                  ):
         self.user = user
+        self.description = description
+        self.experience = experience
 
+    @transaction.atomic
     def create_user(self, user_data, role):
+        """Create CustomUser instance method
+        """
         new_user = CustomUser.objects.create(
             **user_data,
             role=role
@@ -26,13 +33,16 @@ class RegistrationService(HandlerMixin):
 
     @transaction.atomic
     def doctor_create(self) -> DoctorProfile:
-        """DoctorService's method to create doctor instance
+        """Create DoctorProfile instance method with CustomUser instance
         """
-
         self._validate_credentials(self.user['password'], self.user['email'])
         user = self.create_user(self.user, role='D')
 
-        obj = DoctorProfile.objects.create(user=user)
+        obj = DoctorProfile.objects.create(
+            user=user,
+            experience=self.experience,
+            description=self.description
+        )
         obj.full_clean()
         obj.save()
 
@@ -40,7 +50,7 @@ class RegistrationService(HandlerMixin):
 
     @transaction.atomic
     def patient_create(self) -> PatientProfile:
-        """Method to create a patient instance
+        """Create PatientProfile instance method with CustomUser instance
         """
 
         self._validate_credentials(self.user['password'], self.user['email'])
@@ -53,7 +63,7 @@ class RegistrationService(HandlerMixin):
         return obj
 
 
-class PatientService(HandlerMixin):
+class PatientService(UserValidationMixin):
     def __init__(self,
                  user: CustomUser = None,
                  mobile: str = None,
@@ -62,22 +72,6 @@ class PatientService(HandlerMixin):
         self.mobile = mobile
         self.user = user
         self.address = address
-
-    # @transaction.atomic
-    # def patient_update_data(self, slug: str) -> PatientProfile:
-    #     """Method to update patient data like common information
-    #     """
-    #     patient: PatientProfile = get_object(PatientProfile, slug=slug)
-
-    #     patient.age = self.age
-    #     patient.height = self.height
-    #     patient.weight = self.weight
-    #     patient.gender = self.gender
-    #     patient.birthday = self.birthday
-
-    #     patient.save()
-
-    #     return patient
 
     @transaction.atomic
     def patient_update_contact(
@@ -100,7 +94,7 @@ class PatientService(HandlerMixin):
         return patient
 
 
-class DoctorService(HandlerMixin):
+class DoctorService(UserValidationMixin):
     def __init__(self,
                  doctor_slug: str = None,
                  appointment_date: datetime.date = None,
@@ -143,11 +137,12 @@ class DoctorService(HandlerMixin):
         """
         doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
 
-        doctor.patients.add(patient)
-        doctor.save()
-        transaction.on_commit(
-            lambda: add_patient.delay(slug, patient.slug)
-        )
+        if not any(doctor_patient == patient for doctor_patient in list(doctor.patients.all())):
+            doctor.patients.add(patient)
+            doctor.save()
+            transaction.on_commit(
+                lambda: patient_add_task.delay(slug, patient.slug)
+            )
 
         return doctor
 
@@ -171,7 +166,9 @@ class DoctorService(HandlerMixin):
     def appointment_create(self, slug: str):
         doctor = get_object(DoctorProfile, slug=self.doctor_slug)
         patient = get_object(PatientProfile, slug=slug)
-        schedule: Schedule = Schedule.objects.filter(available_time__has_key=self.appointment_date)
+        schedule: Schedule = Schedule.objects\
+            .filter(doctor=doctor)\
+            .filter(available_time__has_key=self.appointment_date)
         if schedule:
             for i in schedule:
                 i.available_time[self.appointment_date].remove(self.appointment_time)
@@ -187,5 +184,9 @@ class DoctorService(HandlerMixin):
                 i.save()
 
                 self.patient_list_update(self.doctor_slug, patient)
+
+                transaction.on_commit(
+                    lambda: consulting_appointment_task.delay(self.doctor_slug, slug)
+                )
 
                 return obj

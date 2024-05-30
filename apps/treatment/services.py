@@ -2,10 +2,12 @@ import datetime
 import time
 from django.db import transaction
 
+from apps.analysis.mixins import ValidationMixin
 from apps.treatment.models import Appointment, Medication, Prescription
+from apps.treatment.tasks import prescription_decline_notification_task
 from apps.users.exceptions import DoctorNotFound
 from apps.users.models import DoctorProfile, PatientCard, PatientProfile
-from apps.users.tasks import send_appointment
+from apps.users.tasks import appointment_patient_task
 from apps.users.utils import get_object
 
 
@@ -38,8 +40,9 @@ class MedicationService:
         return obj
 
 
-class TreatmentService:
+class TreatmentService(ValidationMixin):
     def __init__(self,
+                 id: int = None,
                  patient_slug: str = None,
                  medication: Medication = None,
                  dosage: str = None,
@@ -57,6 +60,7 @@ class TreatmentService:
         self.text = text
         self.appointment_date = appointment_date
         self.appointment_time = appointment_time
+        self.id = id
 
     @transaction.atomic
     def create_prescription(
@@ -70,6 +74,7 @@ class TreatmentService:
             raise DoctorNotFound
 
         patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
+        doctor = get_object(DoctorProfile, slug=slug)
 
         obj = Prescription.objects.create(
             patient_card=patient_card,
@@ -77,6 +82,7 @@ class TreatmentService:
             dosage=self.dosage,
             start_date=self.start_date,
             end_date=self.end_date,
+            doctor=doctor,
         )
 
         obj.full_clean()
@@ -105,10 +111,24 @@ class TreatmentService:
         )
 
         transaction.on_commit(
-            lambda: send_appointment.delay(slug, self.patient_slug)
+            lambda: appointment_patient_task.delay(slug, self.patient_slug)
         )
 
         obj.full_clean()
         obj.save()
 
         return obj
+
+    @transaction.atomic
+    def prescription_decline(self, slug: str):
+        self._check_doctor_exists(slug)
+
+        prescription = get_object(Prescription, id=self.id)
+        prescription.is_declined = True
+        prescription.save()
+
+        transaction.on_commit(
+            lambda: prescription_decline_notification_task.delay(prescription.id, self.patient_slug)
+        )
+
+        return prescription

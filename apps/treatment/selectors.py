@@ -29,3 +29,13 @@ class TreatmentSelector:
     def doctor_appointment_list(self, slug) -> Iterable[Appointment]:
         appointments = Appointment.objects.filter(doctor__slug=slug)
         return appointments
+
+    @transaction.atomic
+    def patient_appointment_list(self, slug) -> Iterable[Appointment]:
+        appointments = Appointment.objects.filter(patient__slug=slug)
+        return appointments
+
+    @transaction.atomic
+    def doctor_prescription_list(self, slug: str) -> Iterable[Prescription]:
+        prescriptions = Prescription.objects.filter(doctor__slug=slug)
+        return prescriptions

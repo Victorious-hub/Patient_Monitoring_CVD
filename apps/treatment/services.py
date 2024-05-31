@@ -4,11 +4,14 @@ from django.db import transaction
 
 from apps.analysis.mixins import ValidationMixin
 from apps.treatment.models import Appointment, Medication, Prescription
-from apps.treatment.tasks import prescription_decline_notification_task
-from apps.users.exceptions import DoctorNotFound
-from apps.users.models import DoctorProfile, PatientCard, PatientProfile
+from apps.users.models import DoctorProfile
 from apps.users.tasks import appointment_patient_task
 from apps.users.utils import get_object
+
+from apps.treatment.tasks import (
+    prescription_decline_notification_task,
+    prescription_patient_task
+)
 
 
 class MedicationService:
@@ -25,7 +28,7 @@ class MedicationService:
 
     @transaction.atomic
     def create_medication(self) -> Medication:
-        """Method to create a medications
+        """Create Medication instance objects
         """
         obj = Medication.objects.create(
             name=self.name,
@@ -63,18 +66,17 @@ class TreatmentService(ValidationMixin):
         self.id = id
 
     @transaction.atomic
-    def create_prescription(
+    def prescription_create(
         self,
         slug: str,
     ) -> Medication:
-        """Method to create a prescription for patient
+        """Create Prescription instance objects
         """
 
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
+        self._check_doctor_exists(slug)
 
-        patient_card = get_object(PatientCard, patient__slug=self.patient_slug)
         doctor = get_object(DoctorProfile, slug=slug)
+        patient_card = doctor.patient_cards.get(patient__slug=self.patient_slug)
 
         obj = Prescription.objects.create(
             patient_card=patient_card,
@@ -88,20 +90,23 @@ class TreatmentService(ValidationMixin):
         obj.full_clean()
         obj.save()
 
+        transaction.on_commit(
+            lambda: prescription_patient_task.delay(slug, self.patient_slug)
+        )
+
         return obj
 
     @transaction.atomic
-    def create_appointment(
+    def appointment_create(
         self,
         slug: str
     ) -> Appointment:
         """Method to place an appointment for patient
         """
-        if not DoctorProfile.objects.filter(slug=slug).exists():
-            raise DoctorNotFound
+        self._check_doctor_exists(slug)
 
-        patient = get_object(PatientProfile, slug=self.patient_slug)
         doctor = get_object(DoctorProfile, slug=slug)
+        patient = doctor.patients.get(slug=self.patient_slug)
 
         obj = Appointment.objects.create(
             patient=patient,
@@ -110,12 +115,12 @@ class TreatmentService(ValidationMixin):
             appointment_time=self.appointment_time
         )
 
+        obj.full_clean()
+        obj.save()
+
         transaction.on_commit(
             lambda: appointment_patient_task.delay(slug, self.patient_slug)
         )
-
-        obj.full_clean()
-        obj.save()
 
         return obj
 
@@ -126,7 +131,6 @@ class TreatmentService(ValidationMixin):
         prescription = get_object(Prescription, id=self.id)
         prescription.is_declined = True
         prescription.save()
-
         transaction.on_commit(
             lambda: prescription_decline_notification_task.delay(prescription.id, self.patient_slug)
         )

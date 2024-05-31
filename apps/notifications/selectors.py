@@ -11,7 +11,5 @@ class NotificationSelector:
     @transaction.atomic
     def notification_list(self, slug) -> Iterable[Notification]:
         patient = get_object(PatientProfile, slug=slug)
-        notifications = Notification.objects.filter(patient=patient)
-        for i in notifications:
-            i.is_read = True
-        return notifications
+        patient.notifications.update(is_read=True)
+        return patient.notifications.all()

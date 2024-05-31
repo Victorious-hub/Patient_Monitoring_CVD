@@ -45,7 +45,7 @@ class PrescriptionCreateApi(views.APIView):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         prescription = TreatmentService(**serializer.validated_data)
-        prescription.create_prescription(slug)
+        prescription.prescription_create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -90,7 +90,7 @@ class AppointmentCreateApi(views.APIView):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         appointment = TreatmentService(**serializer.validated_data)
-        appointment.create_appointment(slug)
+        appointment.appointment_create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

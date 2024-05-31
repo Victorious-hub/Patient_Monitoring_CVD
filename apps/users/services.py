@@ -5,7 +5,7 @@ from apps.treatment.models import Appointment
 from .mixins import UserValidationMixin
 from apps.users.utils import get_object
 from django.contrib.auth.hashers import make_password
-from apps.users.models import DoctorProfile, PatientProfile, CustomUser, Schedule
+from apps.users.models import DoctorProfile, PatientProfile, CustomUser
 from apps.users.tasks import patient_add_task, consulting_appointment_task
 
 
@@ -78,7 +78,7 @@ class PatientService(UserValidationMixin):
         self,
         slug: str
     ) -> PatientProfile:
-        """Method to update patient contact data like email or phone
+        """Update PatientProfile instance
         """
         patient: PatientProfile = get_object(PatientProfile, slug=slug)
 
@@ -115,7 +115,7 @@ class DoctorService(UserValidationMixin):
         self,
         slug: str
     ) -> DoctorProfile:
-        """DoctorService's method for updating
+        """Update DoctorProfile instance
         """
 
         doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
@@ -135,6 +135,7 @@ class DoctorService(UserValidationMixin):
     ) -> DoctorProfile:
         """Method to add patients to doctor's current list of patients
         """
+
         doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
 
         if not any(doctor_patient == patient for doctor_patient in list(doctor.patients.all())):
@@ -154,10 +155,9 @@ class DoctorService(UserValidationMixin):
         """If patient is all right, or no need to give some treatment, delete him(her) from list
         """
         doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
-        patient = self.patients
 
-        if patient in doctor.patients.all():
-            doctor.patients.remove(patient)
+        if self.patients in doctor.patients.all():
+            doctor.patients.remove(self.patients)
             doctor.save()
 
         return doctor
@@ -166,8 +166,7 @@ class DoctorService(UserValidationMixin):
     def appointment_create(self, slug: str):
         doctor = get_object(DoctorProfile, slug=self.doctor_slug)
         patient = get_object(PatientProfile, slug=slug)
-        schedule: Schedule = Schedule.objects\
-            .filter(doctor=doctor)\
+        schedule = doctor.schedulies\
             .filter(available_time__has_key=self.appointment_date)
         if schedule:
             for i in schedule:

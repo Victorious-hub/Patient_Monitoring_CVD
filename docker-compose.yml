@@ -69,5 +69,6 @@ services:
     depends_on:
       - celery
       - redis
+      - db
 volumes:
   pg-data:

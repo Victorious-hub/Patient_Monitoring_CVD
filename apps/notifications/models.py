@@ -14,7 +14,7 @@ class Notification(models.Model):
         CONCLUSION = 'CU', _('Conclusion')
 
     notification_type = models.CharField(max_length=2, choices=NotificationType.choices, default=NotificationType.ANALYSIS)
-    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE)
+    patient = models.ForeignKey(PatientProfile, on_delete=models.PROTECT, related_name='notifications')
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateField(auto_now_add=True)

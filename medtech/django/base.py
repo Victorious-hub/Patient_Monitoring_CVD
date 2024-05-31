@@ -20,8 +20,8 @@ CORS_ORIGIN_WHITELIST = [
     'http://10.0.2.2:8000'
 ]
 
-CELERY_BROKER_URL = 'redis://redis:6379'
-CELERY_RESULT_BACKEND = 'redis://redis:6379'
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 # CELERY_BEAT_SCHEDULE = {
 #     "filter_schedule_task": {
 #         "task": "apps.users.filter_schedule_task",

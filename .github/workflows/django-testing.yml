@@ -29,8 +29,6 @@ jobs:
           pip install flake8
           flake8
 
-      
-
       - name: Django Testing
         run: |
           python3 manage.py test

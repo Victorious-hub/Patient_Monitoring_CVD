@@ -100,9 +100,9 @@ class PatientCard(models.Model):
 
 class DoctorProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    patients = models.ManyToManyField(PatientProfile)
+    patients = models.ManyToManyField(PatientProfile, related_name='patients')
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True, editable=False)
-    patient_cards = models.ManyToManyField(PatientCard)
+    patient_cards = models.ManyToManyField(PatientCard, related_name='patient_cards')
     profile_image = models.ImageField(upload_to='images/', null=False, blank=True, default='images/account.png')
     description = models.TextField(default="")
     experience = models.IntegerField(default=0)
@@ -121,7 +121,7 @@ class DoctorProfile(models.Model):
 
 
 class Schedule(models.Model):
-    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='schedulies')
     available_time = models.JSONField()
 
     class Meta:

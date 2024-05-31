@@ -83,8 +83,9 @@ class AnalysisService(ValidationMixin):
         """Method to create a blood analysis for patient
         """
         self._check_doctor_exists(slug)
-        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
+        # patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
         doctor = get_object(DoctorProfile, slug=slug)
+        patient_card = doctor.patient_cards.get(patient__slug=self.patient_slug)
 
         obj = BloodAnalysis.objects.create(
             patient=patient_card,
@@ -96,12 +97,12 @@ class AnalysisService(ValidationMixin):
         obj.full_clean()
         obj.save()
 
+        patient_card.is_blood_analysis = True
+        patient_card.save()
+
         transaction.on_commit(
             lambda: blood_analysis_notification_task.delay(slug, self.patient_slug)
         )
-
-        patient_card.is_blood_analysis = True
-        patient_card.save()
 
         return obj
 
@@ -114,8 +115,8 @@ class AnalysisService(ValidationMixin):
 
         self._check_doctor_exists(slug)
 
-        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
         doctor = get_object(DoctorProfile, slug=slug)
+        patient_card: PatientCard = doctor.patient_cards.get(patient__slug=self.patient_slug)
 
         obj = CholesterolAnalysis.objects.create(
             patient=patient_card,
@@ -128,12 +129,12 @@ class AnalysisService(ValidationMixin):
         obj.full_clean()
         obj.save()
 
+        patient_card.is_cholesterol_analysis = True
+        patient_card.save()
+
         transaction.on_commit(
             lambda: cholesterol_analysis_notification_task.delay(slug, self.patient_slug)
         )
-
-        patient_card.is_cholesterol_analysis = True
-        patient_card.save()
 
         return obj
 
@@ -181,7 +182,7 @@ class AnalysisService(ValidationMixin):
         self._card_exists(self.patient)
 
         doctor: DoctorProfile = get_object(DoctorProfile, slug=slug)
-        patient = get_object(PatientProfile, slug=self.patient_slug)
+        patient = doctor.patients.get(slug=self.patient_slug)
 
         patient_card = PatientCard.objects.create(
             abnormal_conditions=self.abnormal_conditions,
@@ -217,17 +218,17 @@ class AnalysisService(ValidationMixin):
         self._check_doctor_exists(slug)
         self._card_exists(self.patient)
 
-        patient_card: PatientCard = get_object(PatientCard, patient__slug=slug)
-        patient_card.abnormal_conditions = self.abnormal_conditions
-        patient_card.active = self.active
-        patient_card.blood_type = self.blood_type
-        patient_card.gender = self.gender
-        patient_card.birthday = self.birthday
-        patient_card.weight = self.weight
-        patient_card.height = self.height
-        patient_card.alcohol = self.alcohol
-        patient_card.smoke = self.smoke
-        patient_card.save()
+        patient_card: PatientCard = PatientCard.objects.filter(patient__slug=slug).update(
+            abnormal_conditions=self.abnormal_conditions,
+            active=self.active,
+            blood_type=self.blood_type,
+            gender=self.gender,
+            birthdat=self.birthday,
+            weight=self.weight,
+            height=self.height,
+            alcohol=self.alcohol,
+            smoke=self.smoke
+        )
         return patient_card
 
     @transaction.atomic
@@ -236,9 +237,10 @@ class AnalysisService(ValidationMixin):
         """
         self._check_doctor_exists(slug)
 
-        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
-        analysis = Diagnosis.objects.filter(patient=patient_card).last()
+        # patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
         doctor = get_object(DoctorProfile, slug=slug)
+        patient_card: PatientCard = doctor.patient_cards.get(patient__slug=self.patient_slug)
+        analysis = Diagnosis.objects.filter(patient=patient_card).last()
 
         obj = Conclusion.objects.create(
             analysis_result=analysis,
@@ -265,7 +267,7 @@ class AnalysisService(ValidationMixin):
         doctor = get_object(DoctorProfile, slug=slug)
         blood_analysis = BloodAnalysis.objects.filter(patient__patient__slug=self.patient_slug).last()
         cholesterol_analysis = CholesterolAnalysis.objects.filter(patient__patient__slug=self.patient_slug).last()
-        patient_card: PatientCard = get_object(PatientCard, patient__slug=self.patient_slug)
+        patient_card: PatientCard = doctor.patient_cards.get(patient__slug=self.patient_slug)
 
         patient_card.gender = 1 if patient_card.gender == "Male" else 0
         preditction = predict_anomaly([

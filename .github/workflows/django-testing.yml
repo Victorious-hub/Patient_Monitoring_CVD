@@ -31,4 +31,4 @@ jobs:
 
       - name: Django Testing
         run: |
-          python3 manage.py test
+          docker compose run web pytest -rP

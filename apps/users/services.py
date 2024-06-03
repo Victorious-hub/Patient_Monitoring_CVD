@@ -94,6 +94,35 @@ class PatientService(UserValidationMixin):
         return patient
 
 
+    @transaction.atomic
+    def appointment_create(self, slug: str):
+        doctor = get_object(DoctorProfile, slug=self.doctor_slug)
+        patient = get_object(PatientProfile, slug=slug)
+        schedule = doctor.schedulies\
+            .filter(available_time__has_key=self.appointment_date)
+        if schedule:
+            for i in schedule:
+                i.available_time[self.appointment_date].remove(self.appointment_time)
+                obj = Appointment.objects.create(
+                    doctor=doctor,
+                    patient=patient,
+                    appointment_date=self.appointment_date,
+                    appointment_time=self.appointment_time
+                )
+
+                obj.full_clean()
+                obj.save()
+                i.save()
+
+                self.patient_list_update(self.doctor_slug, patient)
+
+                transaction.on_commit(
+                    lambda: consulting_appointment_task.delay(self.doctor_slug, slug)
+                )
+
+                return obj
+
+
 class DoctorService(UserValidationMixin):
     def __init__(self,
                  doctor_slug: str = None,
@@ -161,31 +190,3 @@ class DoctorService(UserValidationMixin):
             doctor.save()
 
         return doctor
-
-    @transaction.atomic
-    def appointment_create(self, slug: str):
-        doctor = get_object(DoctorProfile, slug=self.doctor_slug)
-        patient = get_object(PatientProfile, slug=slug)
-        schedule = doctor.schedulies\
-            .filter(available_time__has_key=self.appointment_date)
-        if schedule:
-            for i in schedule:
-                i.available_time[self.appointment_date].remove(self.appointment_time)
-                obj = Appointment.objects.create(
-                    doctor=doctor,
-                    patient=patient,
-                    appointment_date=self.appointment_date,
-                    appointment_time=self.appointment_time
-                )
-
-                obj.full_clean()
-                obj.save()
-                i.save()
-
-                self.patient_list_update(self.doctor_slug, patient)
-
-                transaction.on_commit(
-                    lambda: consulting_appointment_task.delay(self.doctor_slug, slug)
-                )
-
-                return obj

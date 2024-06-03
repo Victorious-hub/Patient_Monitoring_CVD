@@ -40,9 +40,7 @@ class Base64ImageField(serializers.ImageField):
 
             file_name = str(uuid.uuid4())[:12]
             file_extension = self.get_file_extension(file_name, decoded_file)
-
             complete_file_name = "%s.%s" % (file_name, file_extension, )
-
             data = ContentFile(decoded_file, name=complete_file_name)
 
         return super(Base64ImageField, self).to_internal_value(data)
@@ -67,7 +65,6 @@ class PatientCreateApi(views.APIView):
             fields = ('user',)
 
     def post(self, request):
-        print(request.data)
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -77,7 +74,7 @@ class PatientCreateApi(views.APIView):
 
 
 class PatientUpdateContactApi(views.APIView):
-    permission_classes = (IsPatient,)
+   # permission_classes = (IsPatient,)
 
     class InputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -101,7 +98,7 @@ class PatientUpdateContactApi(views.APIView):
 
 
 class PatientListApi(views.APIView):
-    permission_classes = (IsPatient,)
+    permission_classes = (IsPatient | IsDoctor,)
 
     class OutputSerializer(serializers.ModelSerializer):
         mobile = serializers.CharField(),
@@ -163,7 +160,7 @@ class DoctorCreateApi(views.APIView):
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'experience', 'description',)
+            fields = ('user','experience', 'description',)
 
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)
@@ -206,7 +203,7 @@ class PatientDoctorListApi(views.APIView):
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'profile_image', 'description',)
+            fields = ('user', 'profile_image','description',)
 
     def get(self, request, slug):
         patients = PatientSelector()
@@ -229,7 +226,7 @@ class DoctorDetailApi(views.APIView):
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'profile_image', 'experience', 'description',)
+            fields = ('user', 'profile_image','experience', 'description',)
 
     def get(self, request, slug):
         doctors = DoctorSelector()
@@ -257,9 +254,8 @@ class DoctorUpdateApi(views.APIView):
         doctor.doctor_contact_update(slug)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class DoctorPatientDeleteApi(views.APIView):
-    # permission_classes = (IsDoctor,)
+    permission_classes = (IsDoctor,)
 
     class InputSerializer(serializers.ModelSerializer):
         patients = serializers.PrimaryKeyRelatedField(queryset=PatientProfile.objects.all())
@@ -362,6 +358,7 @@ class ScheduleSignCreateApi(views.APIView):
         print(request.data)
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        appointment = DoctorService(**serializer.validated_data)
+        appointment = PatientService(**serializer.validated_data)
         appointment.appointment_create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+

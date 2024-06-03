@@ -1,10 +1,11 @@
 import pytest
-import factory
+from django.contrib.auth.hashers import make_password
 
 from pytest_factoryboy import register
 from faker import Factory as FakerFactory
 
 from collections import OrderedDict
+from apps.users.models import CustomUser, DoctorProfile, PatientCard, PatientProfile
 from apps.users.tests.factories import (
     CardFactory,
     CustomUserPatientFactory,
@@ -27,28 +28,72 @@ def django_db_setup():
         'HOST': 'db',
         'PORT': 5432,
         'PASSWORD': 'strong-password',
+        'ATOMIC_REQUESTS': True,
     }
 
 
+
 @pytest.fixture
-def user_service_invalid_password():
-    user = OrderedDict(
-        [
-            ('email', "test1234@gmail.com"),
-            ('first_name', factory.LazyFunction(lambda: faker.name())),
-            ('last_name', "last_name"),
-            ('is_staff', False),
-            ('is_active', True),
-            ('password', "1234567"),
-        ]
-    )
-    return user
+def patient_factory(db):
+    def create_app_patient(
+            email: str = None,
+            first_name: str = None,
+            last_name: str = None,
+            password: str = None,
+    ):
+        patient_data = {
+            'user': {
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email,
+                'password': password,
+            },
+        }
+        return patient_data
+    return create_app_patient
+
+@pytest.fixture
+def doctor_factory(db):
+    def create_app_doctor(
+            email: str = None,
+            first_name: str = None,
+            last_name: str = None,
+            password: str = None,
+            description: str = None,
+            experience: int = None,
+    ):
+        doctor_data = {
+            'user': {
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email,
+                'password': password,
+            },
+            'description': description,
+            'experience': experience,
+        }
+        return doctor_data
+    return create_app_doctor
 
 
 @pytest.fixture
-def user_service_email_exists(user_service_invalid_password):
-    user_service_invalid_password['password'] = "12345678"
-    return user_service_invalid_password
+def patient_update_factory(db):
+    def create_app_patient(
+            first_name: str = None,
+            last_name: str = None,
+            address: str = None,
+            mobile: str = None,
+    ):
+        patient_data = {
+            'user': {
+                'first_name': first_name,
+                'last_name': last_name,
+            },
+            'address': address,
+            'mobile': mobile,
+        }
+        return patient_data
+    return create_app_patient
 
 
 register(CustomUserPatientFactory)

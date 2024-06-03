@@ -93,7 +93,6 @@ class PatientService(UserValidationMixin):
 
         return patient
 
-
     @transaction.atomic
     def appointment_create(self, slug: str):
         doctor = get_object(DoctorProfile, slug=self.doctor_slug)

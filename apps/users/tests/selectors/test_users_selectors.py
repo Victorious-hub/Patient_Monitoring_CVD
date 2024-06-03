@@ -1,56 +1,68 @@
-from django.http import Http404
 import pytest
-from apps.users.models import PatientProfile
-from apps.users.selectors import PatientSelector
+from apps.users.selectors import DoctorSelector, PatientSelector
 
-
-from apps.users.selectors import PatientSelector
 from apps.users.services import RegistrationService
 
 
-@pytest.mark.django_db
-def test_patient_list(patient_factory):
+@pytest.fixture
+def user_patient_model(patient_factory):
     user_factory = patient_factory(
         first_name='John',
         last_name='Doe',
         email='johan@gmail.com',
         password='123467890',
     )
-    RegistrationService(**user_factory).patient_create()
+    patient = RegistrationService(**user_factory).patient_create()
+    return patient
+
+
+@pytest.fixture
+def doctor_user_model(doctor_factory):
+    user_factory = doctor_factory(
+        first_name='John',
+        last_name='Doe',
+        email='johan@gmail.com',
+        password='123467890',
+        description='some data',
+        experience=10,
+    )
+    doctor = RegistrationService(**user_factory).doctor_create()
+    return doctor
+
+
+@pytest.mark.django_db
+def test_patient_list(user_patient_model):
     data = PatientSelector().patient_list()
-    assert len(data) > 0
+    assert data is not None
+    assert len(data) != 0
 
 
-# @pytest.mark.django_db
-# def test_patient_retrieve(patient_factory):
-#     user: PatientProfile = patient_factory.create()
-#     patient = PatientSelector()
-#     data = patient.patient_get(slug=user.slug)
-#     assert data
-
-#     with pytest.raises(Http404):
-#         patient.patient_get(slug="unexisted patient instance")
+@pytest.mark.django_db
+def test_patient_retrieve(user_patient_model):
+    data = PatientSelector().patient_get(
+        slug=user_patient_model.user.email.split('@')[0]
+    )
+    assert data
 
 
-# @pytest.mark.django_db
-# def test_doctor_retrieve(doctor_factory):
-#     user: DoctorProfile = doctor_factory.create()
-#     doctor = DoctorSelector()
-#     data = doctor.doctor_get(slug=user.slug)
-#     assert data
+@pytest.mark.django_db
+def test_patient_incorrect_slug(user_patient_model):
+    data = PatientSelector().patient_get(
+        slug=user_patient_model.user.email.split('@')[1]
+    )
+    assert data is None
 
 
-# @pytest.mark.django_db
-# def test_doctor_patients_retrieve(doctor_factory):
-#     user: DoctorProfile = doctor_factory.create()
-#     doctor = DoctorSelector()
-#     data = doctor.doctor_get_patients(slug=user.slug)
-#     assert data
+@pytest.mark.django_db
+def test_doctor_list(doctor_user_model):
+    data = DoctorSelector().doctor_list()
+    assert data is not None
+    assert len(data) != 0
 
 
-# @pytest.mark.django_db
-# def test_patient_doctor_list(patient_factory):
-#     user: PatientProfile = patient_factory.build()
-#     doctor = DoctorSelector()
-#     data = doctor.doctor_list(slug=user.slug)
-#     assert data
+@pytest.mark.django_db
+def test_doctor_retrieve(doctor_user_model):
+    data = DoctorSelector().doctor_get(
+        slug=doctor_user_model.user.email.split('@')[0]
+    )
+    assert data

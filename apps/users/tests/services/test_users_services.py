@@ -1,12 +1,12 @@
 import pytest
 
 from apps.users.exceptions import (
-    EmailException, 
-    MobileException, 
+    EmailException,
+    MobileException,
     PasswordLengthException
 )
 from apps.users.services import (
-    PatientService, 
+    PatientService,
     RegistrationService
 )
 
@@ -40,7 +40,7 @@ def test_doctor_create_service(doctor_factory):
     obj = RegistrationService(**doctor).doctor_create()
     assert obj.user.check_password('123456890')
     assert obj.user.role == 'D'
-    assert obj.profile_image != None
+    assert obj.profile_image is not None
     assert obj.patients.count() == 0
     assert obj.patient_cards.count() == 0
 
@@ -53,7 +53,7 @@ def test_patient_create_email_exists_service(patient_factory):
         email='johan@gmail.com',
         password='1234567890',
     )
-    
+
     patient = RegistrationService(**user_factory)
     patient.patient_create()
 
@@ -69,7 +69,7 @@ def test_patient_create_incorrect_password_service(patient_factory):
         email='johan@gmail.com',
         password='1234',
     )
-    
+
     patient = RegistrationService(**user_factory)
     with pytest.raises(PasswordLengthException):
         patient.patient_create()
@@ -88,8 +88,8 @@ def test_patient_update_service(patient_factory, patient_update_factory):
     patient_factory = patient_update_factory(
         first_name=patient.user.first_name,
         last_name=patient.user.last_name,
-        address = 'Some address',
-        mobile = '+1234567890',
+        address='Some address',
+        mobile='+1234567890',
     )
 
     patient_update = PatientService(**patient_factory).patient_update_contact(patient.slug)
@@ -110,8 +110,8 @@ def test_patient_update_incorrect_mobile_service(patient_factory, patient_update
     patient_factory = patient_update_factory(
         first_name=patient.user.first_name,
         last_name=patient.user.last_name,
-        address = 'Some address',
-        mobile = '+12340',
+        address='Some address',
+        mobile='+12340',
     )
 
     with pytest.raises(MobileException):

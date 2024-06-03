@@ -1,11 +1,8 @@
 import pytest
-from django.contrib.auth.hashers import make_password
 
 from pytest_factoryboy import register
 from faker import Factory as FakerFactory
 
-from collections import OrderedDict
-from apps.users.models import CustomUser, DoctorProfile, PatientCard, PatientProfile
 from apps.users.tests.factories import (
     CardFactory,
     CustomUserPatientFactory,
@@ -32,7 +29,6 @@ def django_db_setup():
     }
 
 
-
 @pytest.fixture
 def patient_factory(db):
     def create_app_patient(
@@ -51,6 +47,7 @@ def patient_factory(db):
         }
         return patient_data
     return create_app_patient
+
 
 @pytest.fixture
 def doctor_factory(db):

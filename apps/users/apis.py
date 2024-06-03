@@ -74,7 +74,7 @@ class PatientCreateApi(views.APIView):
 
 
 class PatientUpdateContactApi(views.APIView):
-   # permission_classes = (IsPatient,)
+    # permission_classes = (IsPatient,)
 
     class InputSerializer(serializers.ModelSerializer):
         user = inline_serializer(fields={
@@ -160,7 +160,7 @@ class DoctorCreateApi(views.APIView):
 
         class Meta:
             model = DoctorProfile
-            fields = ('user','experience', 'description',)
+            fields = ('user', 'experience', 'description',)
 
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)
@@ -203,7 +203,7 @@ class PatientDoctorListApi(views.APIView):
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'profile_image','description',)
+            fields = ('user', 'profile_image', 'description',)
 
     def get(self, request, slug):
         patients = PatientSelector()
@@ -226,7 +226,7 @@ class DoctorDetailApi(views.APIView):
 
         class Meta:
             model = DoctorProfile
-            fields = ('user', 'profile_image','experience', 'description',)
+            fields = ('user', 'profile_image', 'experience', 'description',)
 
     def get(self, request, slug):
         doctors = DoctorSelector()
@@ -253,6 +253,7 @@ class DoctorUpdateApi(views.APIView):
         doctor = DoctorService(**serializer.validated_data)
         doctor.doctor_contact_update(slug)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class DoctorPatientDeleteApi(views.APIView):
     permission_classes = (IsDoctor,)
@@ -361,4 +362,3 @@ class ScheduleSignCreateApi(views.APIView):
         appointment = PatientService(**serializer.validated_data)
         appointment.appointment_create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-

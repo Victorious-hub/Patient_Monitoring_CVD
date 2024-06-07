@@ -359,6 +359,6 @@ class ScheduleSignCreateApi(views.APIView):
         print(request.data)
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        appointment = PatientService(**serializer.validated_data)
+        appointment = DoctorService(**serializer.validated_data)
         appointment.appointment_create(slug)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -74,7 +74,7 @@ $ docker-compose up --build
 Patient Cardio Vascular Disease monitoring is just a simple application. The main goal is to easy track doctor's patients with their potential CV problems or anomalies, provide some treatment, make their life better and just be on air). For searching for CV anomalies, this app includes some machine learning models that were trained on the CVD dataset!
 - Cardiovascular Disease dataset https://www.kaggle.com/datasets/sulianovacardiovascular-disease-dataset
 
-It's also a good choice for patient to track it's analyses, doctor info, notification, condition and treat proccess
+It's also a good choice for patient to track their analysis, doctor info, notifications, condition and treatment proccess
 
 ## Project stack
 It's a backend part of my application. It includes:
@@ -86,7 +86,7 @@ It's a backend part of my application. It includes:
 - PostgreSQL
 - Celery/Celery-Flow
 - Redis
-- nginx
+- pytest
 
 ## Models
 
@@ -189,3 +189,29 @@ It's a backend part of my application. It includes:
 - desc text
 - created_at timestamp
 
+# Project Architecture
+### Simplified architecture
+![Backend](screenshots/backend_architecture.png)
+
+It includes 6 main components:
+- Django REST application(server configuration with distinct modules of applications). Combined in a monolith structure
+- Docker(wrap your apps in images and execute as independent containers together)
+- Redis(used as message broker between Django(producer) and Celery(consumer))
+- Celery(task queue)
+- PostgreSQL(database to store data)
+
+Every app can be presented with views, services(domain) and model
+
+![Backend](screenshots/backend_inside.png)
+
+### View architecture
+
+![Backend_View](screenshots/backend_view.png)
+
+### Service(domain) architecture
+
+![Backend_Service](screenshots/backend_service.png)
+
+### Model architecture
+
+![Backend_Model](screenshots/backend_model.png)

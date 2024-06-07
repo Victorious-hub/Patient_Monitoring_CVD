@@ -65,13 +65,19 @@ class RegistrationService(UserValidationMixin):
 
 class PatientService(UserValidationMixin):
     def __init__(self,
+                 doctor_slug: str = None,
                  user: CustomUser = None,
                  mobile: str = None,
-                 address: str = None
+                 address: str = None,
+                 appointment_date: datetime.date = None,
+                 appointment_time: datetime.time = None,
                  ):
         self.mobile = mobile
         self.user = user
         self.address = address
+        self.doctor_slug = doctor_slug
+        self.appointment_date = appointment_date
+        self.appointment_time = appointment_time
 
     @transaction.atomic
     def patient_update_contact(
@@ -92,34 +98,6 @@ class PatientService(UserValidationMixin):
         patient.save()
 
         return patient
-
-    @transaction.atomic
-    def appointment_create(self, slug: str):
-        doctor = get_object(DoctorProfile, slug=self.doctor_slug)
-        patient = get_object(PatientProfile, slug=slug)
-        schedule = doctor.schedulies\
-            .filter(available_time__has_key=self.appointment_date)
-        if schedule:
-            for i in schedule:
-                i.available_time[self.appointment_date].remove(self.appointment_time)
-                obj = Appointment.objects.create(
-                    doctor=doctor,
-                    patient=patient,
-                    appointment_date=self.appointment_date,
-                    appointment_time=self.appointment_time
-                )
-
-                obj.full_clean()
-                obj.save()
-                i.save()
-
-                self.patient_list_update(self.doctor_slug, patient)
-
-                transaction.on_commit(
-                    lambda: consulting_appointment_task.delay(self.doctor_slug, slug)
-                )
-
-                return obj
 
 
 class DoctorService(UserValidationMixin):
@@ -189,3 +167,31 @@ class DoctorService(UserValidationMixin):
             doctor.save()
 
         return doctor
+
+    @transaction.atomic
+    def appointment_create(self, slug: str):
+        doctor = get_object(DoctorProfile, slug=self.doctor_slug)
+        patient = get_object(PatientProfile, slug=slug)
+        schedule = doctor.schedulies\
+            .filter(available_time__has_key=self.appointment_date)
+        if schedule:
+            for i in schedule:
+                i.available_time[self.appointment_date].remove(self.appointment_time)
+                obj = Appointment.objects.create(
+                    doctor=doctor,
+                    patient=patient,
+                    appointment_date=self.appointment_date,
+                    appointment_time=self.appointment_time
+                )
+
+                obj.full_clean()
+                obj.save()
+                i.save()
+
+                self.patient_list_update(self.doctor_slug, patient)
+
+                transaction.on_commit(
+                    lambda: consulting_appointment_task.delay(self.doctor_slug, slug)
+                )
+
+                return obj
